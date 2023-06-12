@@ -19,7 +19,7 @@ def authentication():
   formData = request.form['image']
 
   try:
-    # Perform facial recognition and return the result as a boolean value
+    # Perform facial recognition and return the result
     # Replace the facial recognition code with your own implementation
     result = face_detect.detection(formData)
     print(result)
@@ -42,7 +42,17 @@ def authentication():
   
 @app.route('/face_recognition', methods=['POST'])
 def recognition():
-  return 0;
+  # Read the image from the HTTP request
+  formData = request.form['image']
+  userID = request.form['username']
+
+  try:
+    # Perform facial recognition and return the result as a boolean value
+    result = face_detect.realtime_detection(userID, formData)
+    return result
+  except Exception as error:
+    print(str(error))
+    return False
 
 @app.route('/screenshot_detection', methods=['POST'])
 def delection():
