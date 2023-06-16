@@ -16,11 +16,16 @@ def index():
 @app.route('/authentication', methods=['POST'])
 def authentication():
   # Read the image from the HTTP request
+  if 'image' not in request.form:
+    return {
+       'auth': False,
+       'user': "",
+       'status': 'No image found'
+    }
   formData = request.form['image']
 
   try:
     # Perform facial recognition and return the result
-    # Replace the facial recognition code with your own implementation
     result = face_detect.detection(formData)
     print(result)
     user = result[0]
@@ -43,16 +48,23 @@ def authentication():
 @app.route('/face_recognition', methods=['POST'])
 def recognition():
   # Read the image from the HTTP request
-  formData = request.form['image']
-  userID = request.form['username']
+  try:
+    formData = request.form['image']
+    userID = request.form['username']
+  except KeyError as keyerror:
+    print(str(keyerror))
+    return {'auth': False, 'status': 'formData not found'}
 
   try:
     # Perform facial recognition and return the result as a boolean value
     result = face_detect.realtime_detection(userID, formData)
-    return result
+    if result:
+      print('Status: Access granted')
+      return {'auth': result, 'Status': 'Access granted'}
+    print('Status: Access delined, ')
+    return {'auth': result, 'Status': 'Access delined'}
   except Exception as error:
     print(str(error))
-    return False
 
 @app.route('/screenshot_detection', methods=['POST'])
 def delection():

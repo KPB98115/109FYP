@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 import util
 import base64
-from pymongo import MongoClient
+#from pymongo import MongoClient
 
 valid_images = []
 valid_image_encodings = []
@@ -19,9 +19,11 @@ valid_faces_names = [
 
 def realtime_detection(userID, base64_str):
   try:
+    """
     # Remove the data attribute from the string
     index = base64_str.find(',') + 1
     base64_str = base64_str[index:]
+    """
     # Convert to JPEG format
     decoded_img = base64.b64decode(base64_str)
   except Exception as error:
@@ -29,15 +31,25 @@ def realtime_detection(userID, base64_str):
     return False
   
   try:
+    """
     # Connect to the database and get the user image url
     conn = MongoClient('localhost', 5050)
     db = conn.fyp_db
     collection = db.acl
 
-    valid_image_url = collection.get({'member': userID}, {'image': 1})
-    return compare_faces(decoded_img, valid_image_url)
+    # Qeury for the image encoding if username is valid.
+    valid_image_encoding = collection.get({'member': userID}, {'encoded_image': 1})
+    return compare_faces(decoded_img, valid_image_encoding)
+    """
+    with open(os.path.join(dirname, "temp.jpg"), "wb") as file:
+      file.write(decoded_img)
+    unknown_img = faceRec.load_image_file(os.path.join(dirname, "temp.jpg"))
+    os.remove('temp.jpg')
+
+    return compare_faces(unknown_img, userID)
   except Exception as error:
-    print("Error: " + str(error))
+    print("Failed to compare with users: " + str(error))
+    return False
     
 
 def detection(base64_str):
@@ -60,10 +72,10 @@ def detection(base64_str):
   try:
     if "unknown_user.jpg" in os.listdir(os.path.join(dirname, "image/unknown_profile_pic")):
       # Load the unknown image for face recognition testing.
-      print("Loading unknown image")
+      print("Status: Loading unknown image")
       unknown_image = faceRec.load_image_file(os.path.join(dirname, "image/unknown_profile_pic/unknown_user.jpg"))
   except Exception as error:
-    print("Failed to load unknown image")
+    print("Error: Failed to load unknown image")
     return ["unknown", False, str(error)]
   
   # Using the original image to compare
@@ -86,7 +98,7 @@ def detection(base64_str):
   if result[1]:
     return result
 
-def compare_faces(unknown_image, valid_face=util.valid_face_encodings):
+def compare_faces(unknown_image, valid_user=None):
   # Get the face encodings for each face in each image file
   # Since there could be more than one face in each image, it returns a list of encodings.
   # But since I know each image only has one face, I only care about the first encoding in each image, so I grab index 0.
@@ -95,20 +107,34 @@ def compare_faces(unknown_image, valid_face=util.valid_face_encodings):
     unknown_face_encoding = faceRec.face_encodings(unknown_image)[0]
 
   except IndexError:
-      print("I wasn't able to locate any faces in at least one of the images. Check the image files. Aborting...")
-      return ["unknown", False, "Error occurred: No faces located."]
+    print("I wasn't able to locate any faces in at least one of the images. Check the image files. Aborting...")
+    return ["unknown", False, "Error occurred: No faces located."]
 
-  print("comparing...")
-  # If the face_valid parameter is not given, use the valid face encoding from util dir.
-  # Otherwise use the given face image.
-  if valid_face != unknown_face_encoding:
-    result = faceRec.compare_faces(valid_face, unknown_face_encoding, tolerance=0.37)[0]
-    return result
+  print("Status: Comparing...")
+  # If the valid_face parameter is not given, use the valid face encoding from util dir.
+  # Otherwise use the given valid face image url.
+  if valid_user is not None:
+    print("Status: Processing real time recognition...")
+    if valid_user == 'kingston':
+      result = faceRec.compare_faces([util.kingston_face_encodings], unknown_face_encoding, tolerance=0.37)[0]
+    elif valid_user == 'eva':
+      result = faceRec.compare_faces([util.eva_face_encodings], unknown_face_encoding, tolerance=0.37)[0]
+    elif valid_user == 'ling':
+      result = faceRec.compare_faces([util.ling_face_encodings], unknown_face_encoding, tolerance=0.37)[0]
+    elif valid_user == 'lynn':
+      result = faceRec.compare_faces([util.lynn_face_encodings], unknown_face_encoding, tolerance=0.37)[0]
+    elif valid_user == 'hebby':
+      result = faceRec.compare_faces([util.hebby_face_encodings], unknown_face_encoding, tolerance=0.37)[0]
+    else:
+      return False
+    # To convert numpy.bool_ to boolean
+    return bool(result)
   else:
+    print("Status: Processing static recognition...")
     # Results is an array of True/False telling if the unknown face matched anyone in the known_faces array
     # Tolerance = 0.37 seems to be proper value to recognize male and female faces.
-    matches = faceRec.compare_faces(valid_face, unknown_face_encoding, tolerance=0.37)
-    face_distances = faceRec.face_distance(valid_face, unknown_face_encoding)
+    matches = faceRec.compare_faces(util.valid_face_encodings, unknown_face_encoding, tolerance=0.37)
+    face_distances = faceRec.face_distance(util.valid_face_encodings, unknown_face_encoding)
     best_match_index = np.argmin(face_distances)
     if matches[best_match_index]:
       name = valid_faces_names[best_match_index]
@@ -117,29 +143,7 @@ def compare_faces(unknown_image, valid_face=util.valid_face_encodings):
   print("No matching user found.")
   return ["", False, "No valid user found"]
 
-  
-  """
-  if faceRec.compare_faces([util.kingston_face_encodings], unknown_face_encoding, tolerance=0.37)[0] == True:
-    print("User: kingston has login successfully.")
-    return ["Kingston", True, ""]
-  elif faceRec.compare_faces([util.eva_face_encodings], unknown_face_encoding, tolerance=0.37)[0] == True:
-    print("User: eva has login successfully.")
-    return ["Eva", True, ""]
-  elif faceRec.compare_faces([util.ling_face_encodings], unknown_face_encoding, tolerance=0.37)[0] == True:
-    print("User: ling has login successfully.")
-    return ["Ling", True, ""]
-  elif faceRec.compare_faces([util.lynn_face_encodings], unknown_face_encoding, tolerance=0.37)[0] == True:
-    print("User: lynn has login successfully.")
-    return ["Lynn", True, ""]
-  elif faceRec.compare_faces([util.hebby_face_encodings], unknown_face_encoding, tolerance=0.37)[0] == True:
-    print("User: hebby has login successfully.")
-    return ["Hebby", True, ""]
-  else:
-    print("No matching user found.")
-    return ["", False, "No valid user found"]
-  """
-
-
+  # This a copy from original
 
   # Remark(2023/03/13): it can recognize kingston face but not the girls.
   # Not test other male face yet. compare_faces function as parameter 'tolerance=0.54',
@@ -152,3 +156,7 @@ def compare_faces(unknown_image, valid_face=util.valid_face_encodings):
 
   # Remark(2023/06/12): Added the real time faical recognition fucntion, 
   # and modified the compare_face function to accept different purposes of face recognition
+
+  # Remark(2023/06/12): modified the compare_face to accept unknown user image and userID parameter,
+  # and make deteciton function more clean and easy to read.
+  # Unit test for realtime recognition has finished. 
