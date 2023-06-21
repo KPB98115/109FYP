@@ -17,18 +17,24 @@ valid_faces_names = [
   "Hebby"
 ]
 
-def realtime_detection(userID, base64_str):
-  try:
-    """
-    # Remove the data attribute from the string
-    index = base64_str.find(',') + 1
-    base64_str = base64_str[index:]
-    """
-    # Convert to JPEG format
-    decoded_img = base64.b64decode(base64_str)
-  except Exception as error:
-    print("Failed to convert image." + str(error))
-    return False
+def realtime_detection(userID, image):
+  # Decode the image if it is base64 format
+  if isinstance(image, str):
+    try:
+      """
+      # Remove the data attribute from the string
+      index = image.find(',') + 1
+      image = image[index:]
+      """
+      # Convert to JPEG format
+      image = base64.b64decode(image)
+    except Exception as error:
+      print("Failed to convert image." + str(error))
+      return False
+    
+  # Save the screenshot to dictionary
+  with open(os.path.join(dirname, "temp.jpg"), "wb") as file:
+    file.write(image)
   
   try:
     """
@@ -39,10 +45,8 @@ def realtime_detection(userID, base64_str):
 
     # Qeury for the image encoding if username is valid.
     valid_image_encoding = collection.get({'member': userID}, {'encoded_image': 1})
-    return compare_faces(decoded_img, valid_image_encoding)
+    return compare_faces(image, valid_image_encoding)
     """
-    with open(os.path.join(dirname, "temp.jpg"), "wb") as file:
-      file.write(decoded_img)
     unknown_img = faceRec.load_image_file(os.path.join(dirname, "temp.jpg"))
     os.remove('temp.jpg')
 
@@ -52,21 +56,23 @@ def realtime_detection(userID, base64_str):
     return False
     
 
-def detection(base64_str):
-  try:
-    # Remove the data attribute from the string
-    index = base64_str.find(',') + 1
-    base64_str = base64_str[index:]
-    # Convert the WebP file to a JPEG format
-    decoded_img = base64.b64decode(base64_str)
-    # Save the screenshot to dictionary
-    with open(os.path.join(dirname, "image/unknown_profile_pic/unknown_user.jpg"), "wb") as file:
-      file.write(decoded_img)
-
-    #cv2.imwrite("unknown_user.jpeg", jpeg_bytes, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
-  except Exception as error:
-    print("Failed to convert image.")
-    return ["unknown", False, str(error)]
+def detection(image):
+  # Decode the image if it is base64 format
+  if isinstance(image, str):  
+    try:
+    # Decode the image if it is base64 format
+      # Remove the data attribute from the string
+      index = image.find(',') + 1
+      image = image[index:]
+      # Convert the WebP file to a JPEG format
+      image = base64.b64decode(image)
+    except Exception as error:
+      print("Failed to convert image.")
+      return ["unknown", False, str(error)]
+  # Save the screenshot to dictionary
+  with open(os.path.join(dirname, "image/unknown_profile_pic/unknown_user.jpg"), "wb") as file:
+    file.write(image)
+  #cv2.imwrite("unknown_user.jpeg", jpeg_bytes, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
 
   # Load the valid image.
   try:
