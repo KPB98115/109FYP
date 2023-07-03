@@ -1,29 +1,22 @@
-import React, { useState } from 'react';
-import { Button } from 'react-native';
-import ScreenCaptureService from './util/components/ScreenCaptureService';
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import Authentication from './util/components/Authentication';
+import MainPage from './util/components/MainPage';
+import { ContextProvider } from './util/data/Context';
+
+const Stack = createNativeStackNavigator();
 
 const App: React.FC = () => {
-  const [isCapturing, setIsCapturing] = useState(false);
-
-  const startCapture = () => {
-    setIsCapturing(true);
-  };
-
-  const stopCapture = () => {
-    setIsCapturing(false);
-  };
-
   return (
-    <>
-      {isCapturing && (
-        <ScreenCaptureService
-          captureInterval={5000} // Capture interval in milliseconds (5 seconds)
-          apiUrl="https://your-api-endpoint.com/upload" // Replace with your API endpoint
-        />
-      )}
-      <Button title="Start Capture" onPress={startCapture} />
-      <Button title="Stop Capture" onPress={stopCapture} />
-    </>
+    <ContextProvider>
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{headerShown: false}}>
+          <Stack.Screen name="Login" component={Authentication} />
+          <Stack.Screen name="MainPage" component={MainPage} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </ContextProvider>
   );
 };
 

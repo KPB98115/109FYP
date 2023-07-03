@@ -15,18 +15,19 @@ def index():
 
 @app.route('/authentication', methods=['POST'])
 def authentication():
+  return {
+    'auth': True, 'user': 'root', 'status': 'Welcome, root user'
+  }
+
+@app.route('/faical_authentication', methods=['POST'])
+def faical_authentication():
   # Read the image from the HTTP request
-  if 'image' not in request.form:
-    return {
-       'auth': False,
-       'user': "",
-       'status': 'No image found'
-    }
-  formData = request.form['image']
+  print('Processing faical detection')
+  imageData = request.form['image']
 
   try:
     # Perform facial recognition and return the result
-    result = face_detect.detection(formData)
+    result = face_detect.detection(imageData)
     print(result)
     user = result[0]
     is_authenticated = result[1]
@@ -45,7 +46,7 @@ def authentication():
       "status": str(error)
     }
   
-@app.route('/face_recognition', methods=['POST'])
+@app.route('/realtime_authenticate', methods=['POST'])
 def recognition():
   # Read the image from the HTTP request
   try:
@@ -60,15 +61,19 @@ def recognition():
     result = face_detect.realtime_detection(userID, formData)
     if result:
       print('Status: Access granted')
-      return {'auth': result, 'Status': 'Access granted'}
+      return {'auth': result, 'status': 'Access granted'}
     print('Status: Access delined, ')
-    return {'auth': result, 'Status': 'Access delined'}
+    return {'auth': result, 'status': 'Access delined'}
   except Exception as error:
     print(str(error))
 
 @app.route('/screenshot_detection', methods=['POST'])
 def delection():
-   return 0;
+  user = request.form['user']
+  screenshot_in_base64 = request.form['snapshot']
+  # Process the object detection
+  return {'p1': 0, 'p2': 0};
 
+#Run the script with $flask run -h {device ip-address}
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
