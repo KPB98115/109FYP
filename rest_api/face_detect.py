@@ -17,24 +17,16 @@ valid_faces_names = [
   "Hebby"
 ]
 
-def realtime_detection(userID, image):
-  # Decode the image if it is base64 format
-  if isinstance(image, str):
-    try:
-      """
-      # Remove the data attribute from the string
-      index = image.find(',') + 1
-      image = image[index:]
-      """
-      # Convert to JPEG format
-      image = base64.b64decode(image)
-    except Exception as error:
-      print("Failed to convert image." + str(error))
-      return False
-    
-  # Save the screenshot to dictionary
-  with open(os.path.join(dirname, "temp.jpg"), "wb") as file:
-    file.write(image)
+def realtime_detection(userID, base64_str):
+  try:
+    # Remove the data attribute from the string
+    index = base64_str.find(',') + 1
+    base64_str = base64_str[index:]
+    # Convert to JPEG format
+    decoded_img = base64.b64decode(base64_str)
+  except Exception as error:
+    print("Failed to convert image." + str(error))
+    return False
   
   try:
     """
@@ -45,8 +37,10 @@ def realtime_detection(userID, image):
 
     # Qeury for the image encoding if username is valid.
     valid_image_encoding = collection.get({'member': userID}, {'encoded_image': 1})
-    return compare_faces(image, valid_image_encoding)
+    return compare_faces(decoded_img, valid_image_encoding)
     """
+    with open(os.path.join(dirname, "temp.jpg"), "wb") as file:
+      file.write(decoded_img)
     unknown_img = faceRec.load_image_file(os.path.join(dirname, "temp.jpg"))
     os.remove('temp.jpg')
 
@@ -56,23 +50,21 @@ def realtime_detection(userID, image):
     return False
     
 
-def detection(image):
-  # Decode the image if it is base64 format
-  if isinstance(image, str):  
-    try:
-    # Decode the image if it is base64 format
-      # Remove the data attribute from the string
-      index = image.find(',') + 1
-      image = image[index:]
-      # Convert the WebP file to a JPEG format
-      image = base64.b64decode(image)
-    except Exception as error:
-      print("Failed to convert image.")
-      return ["unknown", False, str(error)]
-  # Save the screenshot to dictionary
-  with open(os.path.join(dirname, "image/unknown_profile_pic/unknown_user.jpg"), "wb") as file:
-    file.write(image)
-  #cv2.imwrite("unknown_user.jpeg", jpeg_bytes, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
+def detection(base64_str, original_image_exposure_time=0.0303):
+  try:
+    # Remove the data attribute from the string
+    index = base64_str.find(',') + 1
+    base64_str = base64_str[index:]
+    # Convert the WebP file to a JPEG format
+    decoded_img = base64.b64decode(base64_str)
+    # Save the screenshot to dictionary
+    with open(os.path.join(dirname, "image/unknown_profile_pic/unknown_user.jpg"), "wb") as file:
+      file.write(decoded_img)
+
+    #cv2.imwrite("unknown_user.jpeg", jpeg_bytes, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
+  except Exception as error:
+    print("Failed to convert image.")
+    return ["unknown", False, str(error)]
 
   # Load the valid image.
   try:
@@ -85,24 +77,31 @@ def detection(image):
     return ["unknown", False, str(error)]
   
   # Using the original image to compare
+  print('Status: Comparing with original image...')
   result = compare_faces(unknown_image)
   if result[1]:
     return result
 
   # Increase the brightness of the image
-  for brightness in range(1, 4, 2):
-    unknown_image = cv2.addWeighted(unknown_image, 5, unknown_image, brightness)
-    result = compare_faces(unknown_image)
+  print('Status: Comparing with brightness increased image...')
+  img_list = [unknown_image]
+  for num in range(1, 4, 2):
+    brightness = num/10
+    brightness_increased_image = cv2.addWeighted(unknown_image, brightness, unknown_image, brightness, 0.0)
+    result = compare_faces(brightness_increased_image)
     if result[1]:
       return result
-    
+    img_list.append(brightness_increased_image)
+    cv2.imwrite(f'image/unknown_profile_pic/brightness{brightness}.jpg', brightness_increased_image)
+
   # Use Merge exposures into HDR image
-  merge_debevec = cv2.createMergeDebevce()
-  hdr_debevec = merge_debevec.process(unknown_image, times=np.array([15.0, 2.5, 0.25, 0.0333], dtype=np.float32).copy())
+  print('Status: Comparing with HDR image...')
+  merge_debevec = cv2.createMergeDebevec()
+  exposure_times = np.array([original_image_exposure_time, 0.25, 0.5], dtype=np.float32).copy()
+  hdr_debevec = merge_debevec.process(img_list, times=exposure_times)
   unknown_image = np.clip(hdr_debevec*255, 0, 255).astype('uint8')
   result = compare_faces(unknown_image)
-  if result[1]:
-    return result
+  return result
 
 def compare_faces(unknown_image, valid_user=None):
   # Get the face encodings for each face in each image file
@@ -166,3 +165,14 @@ def compare_faces(unknown_image, valid_user=None):
   # Remark(2023/06/12): modified the compare_face to accept unknown user image and userID parameter,
   # and make deteciton function more clean and easy to read.
   # Unit test for realtime recognition has finished. 
+
+  # Remark(2023/06/29): Changed the face detection to receive JPEG image format, 
+  # but should send base64 encoded string as response in object detection.
+
+  # Remark(2023/07/03): Fixed the bug were related to cv2.MergeDebevec: 
+  #   1. Using original image and 3 image with different brightness in previous process, merge to HDR.
+  #   2. In MergeDebevec.process(), the exposure times are required to every given image, 
+  #      the api should provide the exposure time for original image, otherwise 0.03 will be default value.
+  #   3. The exposure time sequence will be 0.03, 0.25, 0.5 as default(to be confirm)
+  #   4. In cv2.addWeighted(), we set 0.1 and 0.3 as the alpha and beta values, 
+  #      seems like perform well with these settings.
