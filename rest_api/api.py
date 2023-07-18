@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import face_detect
+import object_detect
 from PIL import Image
 import numpy as np
 import cv2
@@ -69,10 +70,9 @@ def recognition():
 
 @app.route('/screenshot_detection', methods=['POST'])
 def delection():
-  user = request.form['user']
-  screenshot_in_base64 = request.form['snapshot']
-  # Process the object detection
-  return {'p1': 0, 'p2': 0};
+  screenshot_in_base64 = request.form['screenshot']
+  result = object_detect.get_coordinates(screenshot_in_base64, user_level = 0)
+  return jsonify(result)
 
 #Run the script with $flask run -h {device ip-address}
 if __name__ == '__main__':

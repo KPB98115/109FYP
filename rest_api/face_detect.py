@@ -92,7 +92,8 @@ def detection(base64_str, original_image_exposure_time=0.0303):
     if result[1]:
       return result
     img_list.append(brightness_increased_image)
-    cv2.imwrite(f'image/unknown_profile_pic/brightness{brightness}.jpg', brightness_increased_image)
+    # Save the image if wanna to see the performance
+    # cv2.imwrite(f'image/unknown_profile_pic/brightness{brightness}.jpg', brightness_increased_image)
 
   # Use Merge exposures into HDR image
   print('Status: Comparing with HDR image...')

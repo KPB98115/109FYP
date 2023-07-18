@@ -11,7 +11,7 @@ const App: React.FC = () => {
   return (
     <ContextProvider>
       <NavigationContainer>
-        <Stack.Navigator screenOptions={{headerShown: false}}>
+        <Stack.Navigator screenOptions={{headerShown: false, animation: 'none'}}>
           <Stack.Screen name="Login" component={Authentication} />
           <Stack.Screen name="MainPage" component={MainPage} />
         </Stack.Navigator>

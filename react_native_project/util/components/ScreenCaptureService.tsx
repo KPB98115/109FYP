@@ -29,16 +29,17 @@ const ScreenCaptureService: React.FC = () => {
       await RNFS.readFile(snapshot.path, 'base64').then(base64_image => {
         formData.append('image', base64_image);
       });
-      fetch('http://172.31.114.168:5000/realtime_authenticate', {
+      console.log(`fetching formData with: ${authContext.currentUser}`);
+      fetch('http://172.20.10.4:5000/realtime_authentication', {
         method: 'POST',
         headers: {'Content-Type': 'multipart/form-data'},
         body: formData,
       }).then(res => res.json()).then(json => {
         if (json.auth) {
-          console.log(json.status);
+          console.log('Access granted');
         }
         else {
-          console.error(json.status);
+          console.error('Access declined');
         }
       }).catch(error => console.log(error));
     }
@@ -46,14 +47,19 @@ const ScreenCaptureService: React.FC = () => {
 
   const screenCapture = async () => {
     captureScreen({ format: 'jpg', quality: 1, result: 'base64' }).then(async (base64_image) => {
+      console.log(base64_image.slice(0, 10));
       const formData = new FormData();
-      formData.append('image', base64_image);
+      formData.append('screenshot', base64_image);
+      formData.append('user', authContext.currentUser);
 
-      fetch('http://172.31.114.168:5000/screen_detection', {
+      fetch('http://172.20.10.4:5000/screenshot_detection', {
         method: 'POST',
         headers: {'Content-Type': 'multipart/form-data'},
         body: formData,
-      }).then(res => res.json()).then(result => console.log(result)).catch((error) => {
+      })
+      .then(res => res.json())
+      .then(result => console.log(result))
+      .catch((error) => {
         console.error('Error uploading screenshot:', error);
       });
     });
@@ -103,6 +109,8 @@ const styles = StyleSheet.create({
     // Set Camera Component to off screen position
     position: 'absolute',
     bottom: -1000,
+    width: '100%',
+    height: '100%',
   },
 });
 

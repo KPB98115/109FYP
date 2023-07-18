@@ -40,11 +40,20 @@ const Authentication:React.FC<AuthenticationProps> = ({ navigation }) => {
     getPermission();
   }, []);
 
+  useEffect(() => {
+    const unSubscribed = navigation.addListener('blur', () => {
+      // Do something when user left Authentication component
+      console.log('Authentication component is blurred');
+    });
+
+    return unSubscribed;
+  }, [navigation]);
+
   const handleCapture = async () => {
     if (camera.current !== null) {
       // Take a snapshot for image preview
       const snapshot = await camera.current.takeSnapshot({
-        quality: 100,
+        quality: 80,
       });
       setSnapshotURL(snapshot.path);
       setIsCaptured(true);
@@ -60,7 +69,7 @@ const Authentication:React.FC<AuthenticationProps> = ({ navigation }) => {
     formData.append('username', username);
     formData.append('password', password);
 
-    await fetch('http://172.31.114.168:5000/authentication', {
+    await fetch('http://172.20.10.4:5000/authentication', {
       method: 'POST',
       headers: {'Content-Type': 'multipart/form-data'},
       body: formData,
@@ -85,17 +94,16 @@ const Authentication:React.FC<AuthenticationProps> = ({ navigation }) => {
     // Access the image file in device storage via url
     //Platform.OS === 'android' ? uri : setUri(uri.replace('file://', ''));
     //fetch(uri).then(res => res.blob()).then(blob => formData.append('image', blob, 'login_user.jpg'));
-    await fetch('http://172.31.114.168:5000/faical_authentication', {
+    await fetch('http://172.31.114.168:5000/facial_authentication', {
       method: 'POST',
       headers: {'Content-Type': 'multipart/form-data'},
       body: formData,
     }).then(res => res.json()).then(json => {
-      console.log(json.auth);
-      console.log(json.user);
       if (json.auth) {
         authContext.isLoggedIn = true;
         authContext.currentUser = json.user;
         navigation.navigate('MainPage');
+        console.log(`Logged-in user: ${authContext.currentUser}`);
       }
       else {
         console.error('Login unsucessful');
