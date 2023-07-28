@@ -1,8 +1,22 @@
 ##包含模型預測、簡易存取控制和特定物件屏蔽
+import os
 import torch
 from PIL import Image
 from yolov5 import detect
 import base64
+from torchvision import transforms
+import io
+
+def save_base64_string_as_image(base64_string):
+  dirname = os.path.dirname(__file__)
+  # Remove the data attribute from the string
+  index = base64_string.find(',') + 1
+  base64_string = base64_string[index:]
+  # Decode the base64 image
+  image_data = base64.b64decode(base64_string)
+  with open(os.path.join(dirname, "screenshot.jpg"), "wb") as file:
+    file.write(image_data)
+  return "screenshot.jpg"
 
 # 完成預測並存取控制
 def filter_forbidden_objects(user_level, object_list, control_list):
@@ -35,14 +49,11 @@ def get_forbidden_object_coordinates(forbidden_object_indices, object_list):
 # Default user level is 0
 def get_coordinates(base64_image, user_level = 0):
   try:
-    # Remove the data attribute from the string
-    index = base64_image.find(',') + 1
-    base64_image = base64_image[index:]
     # 控制清單
     control_list = {"car": 0, "person": 1, "gun": 2, "knife": 2, "blood": 3}
     # 調用函數獲取預測结果
     model = torch.hub.load('ultralytics/yolov5', 'yolov5s')
-    image = base64.b64decode(base64_image)
+    image = save_base64_string_as_image(base64_image)
     results = model(image)
     # 提取物件名稱和座標
     pred_classes = results.pandas().xyxy[0]['name']
@@ -59,9 +70,13 @@ def get_coordinates(base64_image, user_level = 0):
       }
       object_list.append(obj)
     forbidden_object_indices = filter_forbidden_objects(user_level, object_list, control_list)
-    return get_forbidden_object_coordinates(forbidden_object_indices, object_list)
+    result = get_forbidden_object_coordinates(forbidden_object_indices, object_list)
+    os.remove('screenshot.jpg')
+    return result
 
   except Exception as error:
     print("Failed extract coordinates:" + str(error))
     return []
 
+# Remark(2023/07/18): Modified the code from script to module, it can be called as module in api.py
+# src: https://github.com/KPB98115/109FYP/blob/main/colob_tutorial/yolov5_detect%26AC%26mosaic.ipynb
