@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 import util
 import base64
+import random
 #from pymongo import MongoClient
 
 valid_images = []
@@ -25,28 +26,22 @@ def realtime_detection(userID, base64_str):
     # Convert to JPEG format
     decoded_img = base64.b64decode(base64_str)
   except Exception as error:
-    print("Failed to convert image." + str(error))
+    print("Failed to convert image.")
     return False
   
   try:
-    """
-    # Connect to the database and get the user image url
-    conn = MongoClient('localhost', 5050)
-    db = conn.fyp_db
-    collection = db.acl
-
-    # Qeury for the image encoding if username is valid.
-    valid_image_encoding = collection.get({'member': userID}, {'encoded_image': 1})
-    return compare_faces(decoded_img, valid_image_encoding)
-    """
-    with open(os.path.join(dirname, "temp.jpg"), "wb") as file:
+    with open(os.path.join(dirname, 'temp.jpg'), "wb") as file:
       file.write(decoded_img)
-    unknown_img = faceRec.load_image_file(os.path.join(dirname, "temp.jpg"))
+    unknown_img = faceRec.load_image_file(os.path.join(dirname, 'temp.jpg'))
     os.remove('temp.jpg')
+    # unit test purpose
+    with open(os.path.join(dirname, f'image/test_img/male_{random.randint(100, 999)}.jpg'), "wb") as file:
+      file.write(decoded_img)
 
-    return compare_faces(unknown_img, userID)
+    is_authorized = compare_faces(unknown_img, userID)
+    return is_authorized
   except Exception as error:
-    print("Failed to compare with users: " + str(error))
+    print("Failed to compare with users: ")
     return False
     
 
@@ -92,8 +87,7 @@ def detection(base64_str, original_image_exposure_time=0.0303):
     if result[1]:
       return result
     img_list.append(brightness_increased_image)
-    # Save the image if wanna to see the performance
-    # cv2.imwrite(f'image/unknown_profile_pic/brightness{brightness}.jpg', brightness_increased_image)
+    cv2.imwrite(f'image/unknown_profile_pic/brightness{brightness}.jpg', brightness_increased_image)
 
   # Use Merge exposures into HDR image
   print('Status: Comparing with HDR image...')
@@ -102,38 +96,43 @@ def detection(base64_str, original_image_exposure_time=0.0303):
   hdr_debevec = merge_debevec.process(img_list, times=exposure_times)
   unknown_image = np.clip(hdr_debevec*255, 0, 255).astype('uint8')
   result = compare_faces(unknown_image)
-  return result
+  return ["", result, "No faces were found"]
 
 def compare_faces(unknown_image, valid_user=None):
   # Get the face encodings for each face in each image file
   # Since there could be more than one face in each image, it returns a list of encodings.
   # But since I know each image only has one face, I only care about the first encoding in each image, so I grab index 0.
   try:
-    # Encoding the unknown image 
-    unknown_face_encoding = faceRec.face_encodings(unknown_image)[0]
+    # Using GPU/CUDE to acclarate the face landmark process
+    batch_of_face_locations = faceRec.batch_face_locations(unknown_image)
+    # Encoding the unknown image
+    unknown_face_encoding = faceRec.face_encodings(unknown_image, batch_of_face_locations)[0]
 
   except IndexError:
     print("I wasn't able to locate any faces in at least one of the images. Check the image files. Aborting...")
-    return ["unknown", False, "Error occurred: No faces located."]
+    return False
 
   print("Status: Comparing...")
+  print(valid_user)
   # If the valid_face parameter is not given, use the valid face encoding from util dir.
   # Otherwise use the given valid face image url.
   if valid_user is not None:
     print("Status: Processing real time recognition...")
-    if valid_user == 'kingston':
+    if valid_user == 'Kingston':
       result = faceRec.compare_faces([util.kingston_face_encodings], unknown_face_encoding, tolerance=0.37)[0]
-    elif valid_user == 'eva':
+    elif valid_user == 'Eva':
       result = faceRec.compare_faces([util.eva_face_encodings], unknown_face_encoding, tolerance=0.37)[0]
-    elif valid_user == 'ling':
+    elif valid_user == 'Ling':
       result = faceRec.compare_faces([util.ling_face_encodings], unknown_face_encoding, tolerance=0.37)[0]
-    elif valid_user == 'lynn':
+    elif valid_user == 'Lynn':
       result = faceRec.compare_faces([util.lynn_face_encodings], unknown_face_encoding, tolerance=0.37)[0]
-    elif valid_user == 'hebby':
+    elif valid_user == 'Hebby':
       result = faceRec.compare_faces([util.hebby_face_encodings], unknown_face_encoding, tolerance=0.37)[0]
     else:
+      print("No valid user detected")
       return False
     # To convert numpy.bool_ to boolean
+    print("Detected valid user")
     return bool(result)
   else:
     print("Status: Processing static recognition...")
@@ -177,3 +176,6 @@ def compare_faces(unknown_image, valid_user=None):
   #   3. The exposure time sequence will be 0.03, 0.25, 0.5 as default(to be confirm)
   #   4. In cv2.addWeighted(), we set 0.1 and 0.3 as the alpha and beta values, 
   #      seems like perform well with these settings.
+
+  # Remark(2023/08/01): Added batch_face_locations() function to acclerate the face landmark locate process by access to the GPU.
+  # However the Nvidia Container Toolkit not ready yet.
