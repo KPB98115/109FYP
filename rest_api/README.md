@@ -36,7 +36,7 @@
   ```
   (VEname) $ ...
   ```  
-* [face_recognition](https://github.com/ageitgey/face_recognition) is working on MacOS/Linux only, the facial detection API call would cause the app to crash when hosted on WindowOS.
+* [face_recognition](https://github.com/ageitgey/face_recognition) is working on MacOS/Linux only, the facial detection API call would lead the app to crash when hosted on WindowOS.
 * All required packages are in requirements.txt, enter `pip install -r requirement.txt` in your terminal to install all packages/dependencies.
 * Make sure you pull Yolov5 to /109FYP/rest_api from GitHub by enter `git pull https://github.com/ultralytics/yolov5.git` before starting the flask app.
 * We are hosting the API server on Ubuntu in WSL 2 and managed by Docker Desktop, see the document from https://learn.microsoft.com/zh-tw/windows/wsl/about
