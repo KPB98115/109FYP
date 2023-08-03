@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import ViewShot from 'react-native-view-shot';
 import { captureScreen } from 'react-native-view-shot';
@@ -8,19 +8,19 @@ import RNFS from 'react-native-fs';
 import AuthContext from '../data/Context';
 
 const ScreenCaptureService: React.FC = () => {
-  console.log('Start captureing...');
+  console.log('Start ScreenCaptureService...');
   const camera = useRef<Camera>(null);
   const authContext = useContext(AuthContext);
   const devices = useCameraDevices();
   const device: any = devices.front;
   const captureInterval = 1000;
+  const [isLogin, setIslogin] = useState(true);
 
   const facialCapture = async () => {
     if (camera.current !== null) {
       const snapshot = await camera.current.takeSnapshot({
         quality: 100,
       });
-      console.log(snapshot.path);
       const formData = new FormData();
       formData.append('username', authContext.currentUser);
       if (snapshot.path === '') {
@@ -29,17 +29,15 @@ const ScreenCaptureService: React.FC = () => {
       await RNFS.readFile(snapshot.path, 'base64').then(base64_image => {
         formData.append('image', base64_image);
       });
-      console.log(`fetching formData with: ${authContext.currentUser}`);
-      fetch('http://172.20.10.4:5000/realtime_authentication', {
+      fetch('http://172.31.114.168:5000/realtime_authentication', {
         method: 'POST',
         headers: {'Content-Type': 'multipart/form-data'},
         body: formData,
       }).then(res => res.json()).then(json => {
-        if (json.auth) {
-          console.log('Access granted');
-        }
-        else {
-          console.error('Access declined');
+        if (!json.auth) {
+          authContext.currentUser = '';
+          setIslogin(false);
+          console.error('Access declined: Unauthorized user detected.');
         }
       }).catch(error => console.log(error));
     }
@@ -47,18 +45,19 @@ const ScreenCaptureService: React.FC = () => {
 
   const screenCapture = async () => {
     captureScreen({ format: 'jpg', quality: 1, result: 'base64' }).then(async (base64_image) => {
-      console.log(base64_image.slice(0, 10));
       const formData = new FormData();
       formData.append('screenshot', base64_image);
       formData.append('user', authContext.currentUser);
 
-      fetch('http://172.20.10.4:5000/screenshot_detection', {
+      fetch('http://172.31.114.168:5000/screenshot_detection', {
         method: 'POST',
         headers: {'Content-Type': 'multipart/form-data'},
         body: formData,
       })
       .then(res => res.json())
-      .then(result => console.log(result))
+      .then(result => {
+        authContext.pixelateArea = result;
+      })
       .catch((error) => {
         console.error('Error uploading screenshot:', error);
       });
