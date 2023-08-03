@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import face_detect
-import object_delect
+import object_detect
 from PIL import Image
 import numpy as np
 import cv2
@@ -77,7 +77,7 @@ def screenshot_detection():
   #userID = request.form['user']
   screenshot_in_base64 = request.form['screenshot']
   with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-    future = executor.submit(object_delect.get_coordinates, screenshot_in_base64, user_level = 0)
+    future = executor.submit(object_detect.get_coordinates, screenshot_in_base64, user_level = 0)
   result = future.result()
   print(result)
   return jsonify(result)
