@@ -4,8 +4,6 @@ on:
   push:
     paths:
       - 'rest_api'
-    paths-ignore:
-      - 'rest_api/README.md'
 
 jobs:
 
