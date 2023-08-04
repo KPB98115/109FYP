@@ -10,15 +10,16 @@ jobs:
   build:
 
     runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: ./rest_api
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          path: rest_api
           
       - name: List all file in dictionary
-        run: cd rest_api; ls
+        run: ls
 
       - name: Set up Python
         uses: actions/setup-python@v4
