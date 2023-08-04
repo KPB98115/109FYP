@@ -9,7 +9,7 @@ jobs:
 
   build:
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout code
@@ -31,9 +31,7 @@ jobs:
           sudo apt-get install -y python3-dev python3-pip
 
       - name: Clone Yolov5
-        uses: sudosubin/git-clone-action@8a93ce24d47782e30077508cccacf8a05a891bae
-        with:
-          path: https://github.com/ultralytics/yolov5.git
+        run: git clone https://github.com/ultralytics/yolov5.git
 
       - name: Install face_recognition
         run: |
