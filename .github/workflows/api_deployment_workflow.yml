@@ -67,4 +67,4 @@ jobs:
           docker run -d --name test -p 80:80 kbp98115/api_109fyp:latest
 
       - name: Run test.py script
-        run: python test.py image/ghAction_test.jpg kbp98115/api_109fyp:latest
+        run: python test.py
