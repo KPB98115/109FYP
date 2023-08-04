@@ -3,7 +3,7 @@ import base64
 from pathlib import Path
 
 def main():
-  URL = "http://localhost:80/screenshot_detection"
+  URL = "http://localhost:5000/screenshot_detection"
   #with open('base64_example.txt', 'r') as file:
   #  IMAGE_IN_BASE64 = file.read()
   with open('image/test.jpg', 'rb') as img:
