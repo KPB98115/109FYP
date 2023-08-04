@@ -15,7 +15,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          path: rest_api
+          path: rest_api/
           
       - name: List all file in dictionary
         run: ls
