@@ -2,8 +2,8 @@ name: Rest API integration check and deployment
 
 on:
   push:
-    paths:
-      - 'rest_api'
+    branches:
+      - main
 
 jobs:
 
