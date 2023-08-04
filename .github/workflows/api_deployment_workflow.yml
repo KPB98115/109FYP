@@ -44,7 +44,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Deploy flask API server
-        run: python api.py
+        run: flask run
 
       - name: Run test.py script
         run: python test.py
