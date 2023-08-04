@@ -28,7 +28,7 @@ jobs:
           AGENT_TOOLSDIRECTORY: /opt/hostedtoolcache
           
       - name: Install Python dependencies from requirements.txt
-      - run: pip install -r requirements.txt
+        run: pip install -r requirements.txt
 
       - name: Install system dependencies
         run: |
