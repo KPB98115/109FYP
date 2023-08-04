@@ -2,7 +2,10 @@ name: Rest API integration check and deployment
 
 on:
   push:
-    branches: [ "main" ]
+    paths:
+      - 'rest_api'
+    paths-ignore:
+      - 'rest_api/README.md'
 
 jobs:
 
