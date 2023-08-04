@@ -44,7 +44,7 @@ jobs:
           python3 setup.py install --yes USE_AVX_INSTRUCTIONS
         
       - name: Install other Python packages from requirements.txt
-        run: pip install -r .github/workflows/requirements.txt
+        run: pip install -r requirements.txt
 
       - name: Build Docker image
         run: docker build -t kbp98115/api_109fyp:latest .
@@ -65,4 +65,4 @@ jobs:
           docker run -d --name test -p 80:80 kbp98115/api_109fyp:latest
 
       - name: Run test.py script
-        run: python .github/workflows/test.py
+        run: python test.py
