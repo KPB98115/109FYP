@@ -47,7 +47,7 @@ const ScreenCaptureService: React.FC = () => {
     captureScreen({ format: 'jpg', quality: 1, result: 'base64' }).then(async (base64_image) => {
       const formData = new FormData();
       formData.append('screenshot', base64_image);
-      formData.append('user', authContext.currentUser);
+      formData.append('username', authContext.currentUser);
 
       fetch('http://172.31.114.168:5000/screenshot_detection', {
         method: 'POST',

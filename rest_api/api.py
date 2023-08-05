@@ -25,21 +25,26 @@ def faical_authentication():
   # Read the image from the HTTP request
   print('Processing faical detection')
   imageData = request.form['image']
-  print(imageData[20:])
 
   try:
     # Perform facial recognition and return the result
-    # Replace the facial recognition code with your own implementation
+    # The result should either be Boolean or List object
     result = face_detect.detection(imageData)
-    print(result)
-    user = result[0]
-    is_authenticated = result[1]
-    status = result[2]
-    return {
-        "auth": is_authenticated,
-        "user": user,
-        "status": status
-    }
+    if type(result) is list:
+      user = result[0]
+      is_authenticated = result[1]
+      status = result[2]
+      return {
+          "auth": is_authenticated,
+          "user": user,
+          "status": status
+      }
+    else:
+      return {
+        "auth": False,
+          "user": '',
+          "status": 'No valid user detected'
+      }
   except Exception as error:
     print(str(error))
     return {

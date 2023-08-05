@@ -73,9 +73,12 @@ def detection(base64_str, original_image_exposure_time=0.0303):
   
   # Using the original image to compare
   print('Status: Comparing with original image...')
+  # This result should be a List object
   result = compare_faces(unknown_image)
-  if result[1]:
-    return result
+  if type(result) is bool and result is False:
+    return result # return Boolean objet
+  if type(result) is list and result[1] is True:
+    return result # return List object
 
   # Increase the brightness of the image
   print('Status: Comparing with brightness increased image...')
@@ -84,8 +87,10 @@ def detection(base64_str, original_image_exposure_time=0.0303):
     brightness = num/10
     brightness_increased_image = cv2.addWeighted(unknown_image, brightness, unknown_image, brightness, 0.0)
     result = compare_faces(brightness_increased_image)
-    if result[1]:
-      return result
+    if type(result) is bool and result is False:
+      return result # return Boolean objet
+    if type(result) is list and result[1] is True:
+      return result # return List object
     img_list.append(brightness_increased_image)
     cv2.imwrite(f'image/unknown_profile_pic/brightness{brightness}.jpg', brightness_increased_image)
 
@@ -104,16 +109,16 @@ def compare_faces(unknown_image, valid_user=None):
   # But since I know each image only has one face, I only care about the first encoding in each image, so I grab index 0.
   try:
     # Using GPU/CUDE to acclarate the face landmark process
-    batch_of_face_locations = faceRec.batch_face_locations(unknown_image)
+    #batch_of_face_locations = faceRec.batch_face_locations(unknown_image)
     # Encoding the unknown image
-    unknown_face_encoding = faceRec.face_encodings(unknown_image, batch_of_face_locations)[0]
+    unknown_face_encoding = faceRec.face_encodings(unknown_image)[0]
 
   except IndexError:
     print("I wasn't able to locate any faces in at least one of the images. Check the image files. Aborting...")
     return False
 
   print("Status: Comparing...")
-  print(valid_user)
+  print('valid user parameter is:${valid_user}')
   # If the valid_face parameter is not given, use the valid face encoding from util dir.
   # Otherwise use the given valid face image url.
   if valid_user is not None:
