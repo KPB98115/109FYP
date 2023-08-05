@@ -17,15 +17,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          sparse-checkout: |
-            Dockerfile
-            api.py
-            face_detect.py
-            object_detect.py
-            test.py
-            util.py
-            requirements.txt
 
       - name: Set up Python
         uses: actions/setup-python@v4
