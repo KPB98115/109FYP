@@ -3,7 +3,7 @@ name: Rest API integration check and deployment
 on:
   push:
     branches:
-      - main
+      - testing
 
 jobs:
 
