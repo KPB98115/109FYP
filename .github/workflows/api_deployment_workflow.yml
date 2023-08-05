@@ -27,9 +27,6 @@ jobs:
             util.py
             requirements.txt
 
-      - name: List files in directory
-      - run: ls
-
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
