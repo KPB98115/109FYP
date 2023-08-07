@@ -1,6 +1,9 @@
 name: Rest API integration check and deployment
 
 on:
+  pull_request:
+    branches:
+      - main
   push:
     branches:
       - testing
