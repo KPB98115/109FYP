@@ -103,6 +103,26 @@ def detection(base64_str, original_image_exposure_time=0.0303):
   result = compare_faces(unknown_image)
   return ["", result, "No faces were found"]
 
+def compare_faces(unknown_image):
+  try:
+    # Encoding the unknown image
+    unknown_face_encoding = faceRec.face_encodings(unknown_image)[0]
+  except IndexError:
+    print("I wasn't able to locate any faces in at least one of the images. Check the image files. Aborting...")
+    return False
+  print("Status: Comparing...")
+  # Results is an array of True/False telling if the unknown face matched anyone in the known_faces array
+  # Tolerance = 0.37 seems to be proper value to recognize male and female faces.
+  matches = faceRec.compare_faces(util.valid_face_encodings, unknown_face_encoding, tolerance=0.37)
+  face_distances = faceRec.face_distance(util.valid_face_encodings, unknown_face_encoding)
+  best_match_index = np.argmin(face_distances)
+  if matches[best_match_index]:
+    name = valid_faces_names[best_match_index]
+    return [name, True, ""]
+  else:
+    print("No matching user found.")
+    return ["", False, "No valid user found"]
+
 def compare_faces(unknown_image, valid_user=None):
   # Get the face encodings for each face in each image file
   # Since there could be more than one face in each image, it returns a list of encodings.
@@ -118,7 +138,7 @@ def compare_faces(unknown_image, valid_user=None):
     return False
 
   print("Status: Comparing...")
-  print('valid user parameter is:${valid_user}')
+  print(f'valid user parameter is:{valid_user}')
   # If the valid_face parameter is not given, use the valid face encoding from util dir.
   # Otherwise use the given valid face image url.
   if valid_user is not None:
@@ -139,19 +159,6 @@ def compare_faces(unknown_image, valid_user=None):
     # To convert numpy.bool_ to boolean
     print("Detected valid user")
     return bool(result)
-  else:
-    print("Status: Processing static recognition...")
-    # Results is an array of True/False telling if the unknown face matched anyone in the known_faces array
-    # Tolerance = 0.37 seems to be proper value to recognize male and female faces.
-    matches = faceRec.compare_faces(util.valid_face_encodings, unknown_face_encoding, tolerance=0.37)
-    face_distances = faceRec.face_distance(util.valid_face_encodings, unknown_face_encoding)
-    best_match_index = np.argmin(face_distances)
-    if matches[best_match_index]:
-      name = valid_faces_names[best_match_index]
-      return [name, True, ""]
-  
-  print("No matching user found.")
-  return ["", False, "No valid user found"]
 
   # This a copy from original
 
@@ -184,3 +191,4 @@ def compare_faces(unknown_image, valid_user=None):
 
   # Remark(2023/08/01): Added batch_face_locations() function to acclerate the face landmark locate process by access to the GPU.
   # However the Nvidia Container Toolkit not ready yet.
+  # (Update 2023/08/04) The WSL environment is all set, however still not able to access to the GPU.

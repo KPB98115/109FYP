@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import face_detect
 import object_detect
@@ -11,8 +11,12 @@ app = Flask(__name__)
 CORS(app)
 
 @app.route('/', methods=['GET'])
-def index():
-  return '''<h1>Heelo world</h1>'''
+def welcome():
+  return '''<h1>109 FYP</h1>'''
+
+@app.route('/template', methods=['GET'])
+def template():
+  return render_template('index.html', video_src1 = '', video_src2 = '', video_src3 = '')
 
 @app.route('/authentication', methods=['POST'])
 def authentication():

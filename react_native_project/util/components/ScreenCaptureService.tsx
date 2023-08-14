@@ -6,6 +6,13 @@ import BackgroundTimer from 'react-native-background-timer';
 import { Camera, useCameraDevices } from 'react-native-vision-camera';
 import RNFS from 'react-native-fs';
 import AuthContext from '../data/Context';
+import { accelerometer } from 'react-native-sensors';
+
+let lastTimestamp = Date.now();
+let lastX = 0;
+let lastY = 0;
+let lastZ = 0;
+const threshold = 0.09; // Threshold for motion detection
 
 const ScreenCaptureService: React.FC = () => {
   console.log('Start ScreenCaptureService...');
@@ -15,6 +22,7 @@ const ScreenCaptureService: React.FC = () => {
   const device: any = devices.front;
   const captureInterval = 1000;
   const [isLogin, setIslogin] = useState(true);
+  const [isMotionDetected, setIsMotionDetected] = useState(false);
 
   const facialCapture = async () => {
     if (camera.current !== null) {
@@ -54,9 +62,13 @@ const ScreenCaptureService: React.FC = () => {
         headers: {'Content-Type': 'multipart/form-data'},
         body: formData,
       })
-      .then(res => res.json())
-      .then(result => {
-        authContext.pixelateArea = result;
+      .then(res => {
+        if (res.headers.get('Content-Type')?.includes('application/json')) {
+          const result:any = res.json();
+          authContext.pixelateArea = result;
+        } else {
+          console.log('Invalid content type: ' + res.headers.get('Content-Type'));
+        }
       })
       .catch((error) => {
         console.error('Error uploading screenshot:', error);
@@ -75,8 +87,10 @@ const ScreenCaptureService: React.FC = () => {
 
   useEffect(() => {
     const captureScreenInterval = BackgroundTimer.setInterval(() => {
-      facialCapture();
-      screenCapture();
+      if (!isMotionDetected) {
+        facialCapture();
+        screenCapture();
+      }
     }, captureInterval);
 
     return () => {
@@ -84,6 +98,34 @@ const ScreenCaptureService: React.FC = () => {
       BackgroundTimer.clearInterval(captureScreenInterval);
     };
   }, [captureInterval]);
+
+  // Implement the motion detection to improve performance of every frame
+  useEffect(() => {
+    const accelerometerSubscription = accelerometer.subscribe(({ x, y, z, timestamp }) => {
+      const timeDelta = timestamp - lastTimestamp;
+      const xDelta = Math.abs(x - lastX);
+      const yDelta = Math.abs(y - lastY);
+      const zDelta = Math.abs(z - lastZ);
+
+      if (xDelta > threshold || yDelta > threshold || zDelta > threshold || timeDelta > lastTimestamp) {
+        setIsMotionDetected(true);
+      }
+      else {
+        setIsMotionDetected(false);
+      }
+
+      lastTimestamp = timestamp;
+      lastX = x;
+      lastY = y;
+      lastZ = z;
+    });
+
+    return () => {
+      if (accelerometerSubscription) {
+        accelerometerSubscription.unsubscribe();
+      }
+    };
+  }, []);
 
   if (device == null) { return null; }
 
