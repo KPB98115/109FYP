@@ -91,6 +91,16 @@ def screenshot_detection():
   print(result)
   return jsonify(result)
 
+@app.route('/screenshot_detection', methods=['POST'])
+def yoloviolence_detection():
+  #userID = request.form['user']
+  screenshot_in_base64 = request.form['screenshot']
+  with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+    future = executor.submit(yoloviolencedetection.get_coordinates, screenshot_in_base64, user_level = 0)
+  result = future.result()
+  print(result)
+  return jsonify(result)
+
 #Run the script with $flask run -h 172.31.114.168
 if __name__ == '__main__':
     app.run(debug=True)
