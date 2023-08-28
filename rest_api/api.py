@@ -5,7 +5,6 @@ import object_detect
 from PIL import Image
 import numpy as np
 import cv2
-import concurrent.futures
 import Yoloviolencedetection
 
 app = Flask(__name__)
@@ -81,18 +80,11 @@ def realtime_authentication():
     print(str(error))
 
 @app.route('/screenshot_detection', methods=['POST'])
-def screenshot_detection():
-  #userID = request.form['user']
-  screenshot_in_base64 = request.form['screenshot']
-  result = object_detect.get_coordinates(screenshot_in_base64, user_level=0)
-  print(result)
-  return jsonify(result)
-
-@app.route('/screenshot_detection', methods=['POST'])
 def yoloviolence_detection():
   #userID = request.form['user']
   screenshot_in_base64 = request.form['screenshot']
   result = Yoloviolencedetection.get_coordinates(screenshot_in_base64, user_level=0)
+  #result = object_detect.get_coordinates(screenshot_in_base64, user_level=0)
   print(result)
   return jsonify(result)
 
