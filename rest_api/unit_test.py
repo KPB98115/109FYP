@@ -46,5 +46,9 @@ class FlaskAppTests(unittest.TestCase):
     self.assertEqual(response.status_code, 200)
     self.assertEqual(response.content_type, 'application/json')
 
+  def show_results(self):
+    for res in self.result:
+      print(res)
+
 if __name__ == '__main__':
   unittest.main()
