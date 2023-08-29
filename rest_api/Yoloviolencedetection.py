@@ -47,7 +47,8 @@ def get_forbidden_object_coordinates(indices):
 def get_coordinates(base64_image, user_level = 0):
   try:
     # 載入預訓練的 YOLOv5s 模型
-    model = YOLOv5_singleton()
+    yolo_instance = YOLOv5_singleton()
+    model = yolo_instance.model
     # 定義圖片檔案的路徑
     image_path = save_base64_string_as_image(base64_image)
     # 在圖片上執行推論

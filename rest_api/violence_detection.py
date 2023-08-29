@@ -47,7 +47,8 @@ def violence_detection(base64_image, user_level = 0):
     try:
 
         # 載入預訓練的 YOLOv5s 模型(此處可以替換自定義的權重檔)
-        model = YOLOv5_singleton()
+        yolo_instance = YOLOv5_singleton()
+        model = yolo_instance.model
 
         # 假設 base64_image 是您的 base64 圖片字符串
         image = save_base64_string_as_image(base64_image)
