@@ -82,8 +82,10 @@ def realtime_authentication():
 @app.route('/screenshot_detection', methods=['POST'])
 def yoloviolence_detection():
   #userID = request.form['user']
-  screenshot_in_base64 = request.form['screenshot']
-  result = Yoloviolencedetection.get_coordinates(screenshot_in_base64, user_level=0)
+  screenshot_in_base64: str = request.form['screenshot']
+  screen_width: int = int(request.form['screen_width'])
+  screen_height: int = int(request.form['screen_height'])
+  result = Yoloviolencedetection.get_coordinates(screenshot_in_base64, screen_width, screen_height, user_level=0)
   #result = object_detect.get_coordinates(screenshot_in_base64, user_level=0)
   print(result)
   return jsonify(result)
