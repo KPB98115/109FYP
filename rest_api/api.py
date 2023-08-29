@@ -5,7 +5,7 @@ import object_detect
 from PIL import Image
 import numpy as np
 import cv2
-import Yoloviolencedetection
+import violence_detection
 
 app = Flask(__name__)
 CORS(app)
@@ -83,7 +83,7 @@ def realtime_authentication():
 def yoloviolence_detection():
   #userID = request.form['user']
   screenshot_in_base64 = request.form['screenshot']
-  result = Yoloviolencedetection.get_coordinates(screenshot_in_base64, user_level=0)
+  result = violence_detection.violence_detection(screenshot_in_base64, user_level=0)
   #result = object_detect.get_coordinates(screenshot_in_base64, user_level=0)
   print(result)
   return jsonify(result)

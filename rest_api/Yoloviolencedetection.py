@@ -6,6 +6,26 @@
 import os
 from ultralytics import YOLO
 from PIL import Image, ImageDraw
+import base64
+
+class YOLOv5_singleton:
+    _instance = None
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(YOLOv5_singleton, cls).__new__(cls)
+            cls._instance.model = YOLO('20230714yolov5.pt')
+        return cls._instance
+    
+def save_base64_string_as_image(base64_string):
+    dirname = os.path.dirname(__file__)
+    # 移除 base64 字符串中的 data 屬性
+    index = base64_string.find(',') + 1
+    base64_string = base64_string[index:]
+    # 解碼 base64 圖片
+    image_data = base64.b64decode(base64_string)
+    with open(os.path.join(dirname, "screenshot.jpg"), "wb") as file:
+        file.write(image_data)
+    return "screenshot.jpg"
 
 # 控制使用者是否能存取暴力物件
 def filter_forbidden_objects(user_level, object_list):
@@ -27,9 +47,9 @@ def get_forbidden_object_coordinates(indices):
 def get_coordinates(base64_image, user_level = 0):
   try:
     # 載入預訓練的 YOLOv5s 模型
-    model = YOLO('/content/drive/MyDrive/20230714yolov5.pt')
+    model = YOLOv5_singleton()
     # 定義圖片檔案的路徑
-    image_path = '/content/drive/MyDrive/Colab Notebooks/violencetest/violencetest4.png'
+    image_path = save_base64_string_as_image(base64_image)
     # 在圖片上執行推論
     results = model.predict(image_path)  # 在圖片上執行預測
     # 創建一個包含被屏蔽物件座標的列表

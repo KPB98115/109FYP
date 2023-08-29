@@ -8,6 +8,14 @@ from ultralytics import YOLO
 from PIL import Image, ImageDraw
 import base64
 
+class YOLOv5_singleton:
+    _instance = None
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(YOLOv5_singleton, cls).__new__(cls)
+            cls._instance.model = YOLO('20230714yolov5.pt')
+        return cls._instance
+
 # 控制使用者是否能存取暴力物件
 def filter_forbidden_objects(user_level, object_list):
     if user_level == 0:
@@ -39,7 +47,7 @@ def violence_detection(base64_image, user_level = 0):
     try:
 
         # 載入預訓練的 YOLOv5s 模型(此處可以替換自定義的權重檔)
-        model = YOLO('PATH_TO_WEIGHT.pt')
+        model = YOLOv5_singleton()
 
         # 假設 base64_image 是您的 base64 圖片字符串
         image = save_base64_string_as_image(base64_image)
