@@ -51,3 +51,4 @@ tzdata==2023.3
 ultralytics==8.0.139
 urllib3==2.0.3
 Werkzeug==2.3.6
+py-cpuinfo==9.0.0

@@ -5,7 +5,7 @@ import object_detect
 from PIL import Image
 import numpy as np
 import cv2
-import concurrent.futures
+import Yoloviolencedetection
 
 app = Flask(__name__)
 CORS(app)
@@ -68,10 +68,8 @@ def realtime_authentication():
     return {'auth': False, 'status': 'formData not found'}
 
   try:
-    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-      future = executor.submit(face_detect.realtime_detection, userID, formData)
     # Perform facial recognition and return the result as a boolean value
-    result = future.result()
+    result = face_detect.realtime_detection(userID, formData)
     print(type(result))
     if result:
       print('Status: Access granted')
@@ -82,22 +80,13 @@ def realtime_authentication():
     print(str(error))
 
 @app.route('/screenshot_detection', methods=['POST'])
-def screenshot_detection():
-  #userID = request.form['user']
-  screenshot_in_base64 = request.form['screenshot']
-  with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-    future = executor.submit(object_detect.get_coordinates, screenshot_in_base64, user_level = 0)
-  result = future.result()
-  print(result)
-  return jsonify(result)
-
-@app.route('/screenshot_detection', methods=['POST'])
 def yoloviolence_detection():
   #userID = request.form['user']
-  screenshot_in_base64 = request.form['screenshot']
-  with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-    future = executor.submit(yoloviolencedetection.get_coordinates, screenshot_in_base64, user_level = 0)
-  result = future.result()
+  screenshot_in_base64: str = request.form['screenshot']
+  screen_width: int = int(request.form['screen_width'])
+  screen_height: int = int(request.form['screen_height'])
+  result = Yoloviolencedetection.get_coordinates(screenshot_in_base64, screen_width, screen_height, user_level=0)
+  #result = object_detect.get_coordinates(screenshot_in_base64, user_level=0)
   print(result)
   return jsonify(result)
 
