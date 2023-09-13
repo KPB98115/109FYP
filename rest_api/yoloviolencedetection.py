@@ -55,6 +55,8 @@ def get_coordinates(base64_str, user_level = 0):
         # Remove the data attribute from the string
         index = base64_str.find(',') + 1
         base64_str = base64_str[index:]
+        # Check for and remove null bytes
+        base64_str = base64_str.replace('\x00', '')
         # Convert to JPEG format
         base64_image = base64.b64decode(base64_str)
     except Exception as error:
