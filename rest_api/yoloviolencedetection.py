@@ -14,7 +14,7 @@ class YOLOv5_singleton:
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(YOLOv5_singleton, cls).__new__(cls)
-            cls._instance.model = YOLO('PATH_TO_WEIGHT.pt')
+            cls._instance.model = YOLO('./model_- 3 september 2023 10_50.pt')
         return cls._instance
 #將使用者截圖(base64)轉檔成圖片    
 def save_base64_string_as_image(base64_string):
