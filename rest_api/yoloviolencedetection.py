@@ -16,7 +16,7 @@ class YOLOv5_singleton:
             cls._instance = super(YOLOv5_singleton, cls).__new__(cls)
             cls._instance.model = YOLO('./model_- 3 september 2023 10_50.pt')
         return cls._instance
-#將使用者截圖(base64)轉檔成圖片    
+#將使用者截圖(base64)轉檔成圖片(暫未使用)    
 def save_base64_string_as_image(base64_string):
     dirname = os.path.dirname(__file__)
     # 移除 base64 字符串中的 data 屬性
@@ -44,14 +44,24 @@ def get_forbidden_object_coordinates(indices):
     return coordinates_list
 
 # Default user level is 0
-def get_coordinates(base64_image, user_level = 0):
+def get_coordinates(base64_str, user_level = 0):
     # 定義圖片檔案的路徑
-    image_path = save_base64_string_as_image(base64_image)
+    #image_path = save_base64_string_as_image(base64_image)
     # 檢查圖片是否成功保存
-    if image_path is None:
-        return []  # 或者返回其他錯誤信息
+    #if image_path is None:
+        #return []  # 或者返回其他錯誤信息
+    #將使用者截圖(base64)轉檔成圖片
+    try:
+        # Remove the data attribute from the string
+        index = base64_str.find(',') + 1
+        base64_str = base64_str[index:]
+        # Convert to JPEG format
+        base64_image = base64.b64decode(base64_str)
+    except Exception as error:
+        print("Failed to convert image.")
+        return False
     # 讀取圖像
-    image = Image.open(image_path)
+    image = Image.open(base64_image)
     # 獲取原始圖像的寬度和高度
     original_width, original_height = image.size
     #TODO: This function should pass the original screen resolution and bounding box from yolo detection, and return the bounding box position of original image
@@ -93,7 +103,6 @@ def get_coordinates(base64_image, user_level = 0):
         forbidden_object_indices = filter_forbidden_objects(user_level, forbidden_object_coordinates)
         os.remove('screenshot.png')
         return forbidden_object_indices
-        
     except Exception as error:
         print("Failed extract coordinates:" + str(error))
         return []    
