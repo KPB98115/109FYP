@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import face_detect
 import object_detect
+import yoloviolencedetection
 from PIL import Image
 import numpy as np
 import cv2
@@ -91,15 +92,19 @@ def screenshot_detection():
   print(result)
   return jsonify(result)
 
-@app.route('/screenshot_detection', methods=['POST'])
+@app.route('/yoloviolencedetection', methods=['POST'])
 def yoloviolence_detection():
-  #userID = request.form['user']
-  screenshot_in_base64 = request.form['screenshot']
-  with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-    future = executor.submit(yoloviolencedetection.get_coordinates, screenshot_in_base64, user_level = 0)
-  result = future.result()
-  print(result)
-  return jsonify(result)
+  try:
+    #userID = request.form['user']
+    screenshot_in_base64 = request.form['screenshot']
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+      future = executor.submit(yoloviolencedetection.get_coordinates, screenshot_in_base64, user_level = 0)
+    result = future.result()
+    print(result)
+    return jsonify(result)
+  except Exception as error:
+        print("Error in yoloviolence_detection:", str(error))
+        return jsonify({'error': str(error)}), 500
 
 #Run the script with $flask run -h 172.31.114.168
 if __name__ == '__main__':
