@@ -49,7 +49,7 @@ class FlaskAppTests(unittest.TestCase):
   def test_yoloviolence_detection_response(self):
     response = self.app.post('/yoloviolencedetection', data={'screenshot': self.base64_str, 'username': 'kingston'}, content_type='multipart/form-data')
 
-    print("Response Data from violence detection:"+ str(len(response.get_json())) + "\n\tResponse time: " + str(self.start - time())
+    result = "Response Data from violence detection:"+ str(len(response.get_json())) + "\n\tResponse time: " + str(self.start - time())
     self.result.append(result)
     self.assertEqual(response.status_code, 200)
     self.assertEqual(response.content_type, 'application/json')
