@@ -79,7 +79,7 @@ def realtime_authentication():
   except Exception as error:
     print(str(error))
 
-@app.route('/screenshot_detection', methods=['POST'])
+@app.route('/yoloviolencedetection', methods=['POST'])
 def yoloviolence_detection():
   #userID = request.form['user']
   screenshot_in_base64: str = request.form['screenshot']
