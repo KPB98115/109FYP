@@ -83,7 +83,7 @@ def realtime_authentication():
 def yoloviolence_detection():
   try:
     #userID = request.form['user']
-    screenshot_in_base64: str = request.form['screenshot']
+    screenshot_in_base64 : str = request.form['screenshot']
     result = yoloviolencedetection.get_coordinates(screenshot_in_base64, user_level=0)
     #result = object_detect.get_coordinates(screenshot_in_base64, user_level=0)
     print(result)

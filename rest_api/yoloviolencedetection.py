@@ -14,7 +14,7 @@ class YOLOv5_singleton:
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(YOLOv5_singleton, cls).__new__(cls)
-            cls._instance.model = YOLO('./model_- 3 september 2023 10_50.pt')
+            cls._instance.model = YOLO('model_3_september_2023_10_50.pt')
         return cls._instance
 #將使用者截圖(base64)轉檔成圖片(暫未使用)    
 def save_base64_string_as_image(base64_string):
@@ -22,6 +22,8 @@ def save_base64_string_as_image(base64_string):
     # 移除 base64 字符串中的 data 屬性
     index = base64_string.find(',') + 1
     base64_string = base64_string[index:]
+    # Check for and remove null bytes
+    base64_str = base64_str.replace('\x00', '')
     # 解碼 base64 圖片
     image_data = base64.b64decode(base64_string)
     with open(os.path.join(dirname, "screenshot.jpg"), "wb") as file:
@@ -45,25 +47,18 @@ def get_forbidden_object_coordinates(indices):
 
 # Default user level is 0
 def get_coordinates(base64_str, user_level = 0):
-    # 定義圖片檔案的路徑
-    #image_path = save_base64_string_as_image(base64_image)
-    # 檢查圖片是否成功保存
-    #if image_path is None:
-        #return []  # 或者返回其他錯誤信息
     #將使用者截圖(base64)轉檔成圖片
     try:
-        # Remove the data attribute from the string
-        index = base64_str.find(',') + 1
-        base64_str = base64_str[index:]
-        # Check for and remove null bytes
-        base64_str = base64_str.replace('\x00', '')
-        # Convert to JPEG format
-        base64_image = base64.b64decode(base64_str)
+      # 定義圖片檔案的路徑
+      image_path = save_base64_string_as_image(base64_str)
+      # 檢查圖片是否成功保存
+      if image_path is None:
+        return []  # 或者返回其他錯誤信息
     except Exception as error:
-        print("Failed to convert image.")
-        return False
+      print("Failed to convert image.")
+      return False
     # 讀取圖像
-    image = Image.open(base64_image)
+    image = Image.open(image_path)
     # 獲取原始圖像的寬度和高度
     original_width, original_height = image.size
     #TODO: This function should pass the original screen resolution and bounding box from yolo detection, and return the bounding box position of original image
