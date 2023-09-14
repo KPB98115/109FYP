@@ -2,10 +2,10 @@ from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import face_detect
 import object_detect
+import yoloviolencedetection
 from PIL import Image
 import numpy as np
 import cv2
-import yoloviolencedetection
 
 app = Flask(__name__)
 CORS(app)
@@ -87,7 +87,7 @@ def yoloviolence_detection():
     result = yoloviolencedetection.get_coordinates(screenshot_in_base64, user_level=0)
     #result = object_detect.get_coordinates(screenshot_in_base64, user_level=0)
     print(result)
-    return jsonify(result)
+    return jsonify({'result': result})
   except Exception as error:
       print("Error in yoloviolence_detection:", str(error))
       return jsonify({'error': str(error)}), 500
