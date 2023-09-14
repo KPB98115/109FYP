@@ -6,6 +6,7 @@
 ##使用"自定義的權重檔"，對"圖片"進行預測，可輸出暴力物件座標。
 import io
 import os
+import json
 from ultralytics import YOLO
 from PIL import Image, ImageDraw
 import base64
