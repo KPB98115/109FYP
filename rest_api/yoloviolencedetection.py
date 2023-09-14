@@ -49,4 +49,4 @@ def get_coordinates(base64_image, user_level = 0):
 
   except Exception as error:
     print("Failed extract coordinates:" + str(error))
-    return []
+    return "[]"
