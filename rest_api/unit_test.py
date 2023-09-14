@@ -38,15 +38,13 @@ class FlaskAppTests(unittest.TestCase):
     self.assertEqual(response.status_code, 200)
     self.assertEqual(response.content_type, 'application/json')
     
-"""
-  def test_screen_detection_response(self):
-    response = self.app.post('/screenshot_detection', data={'screenshot': self.base64_str, 'username': 'kingston'}, content_type='multipart/form-data')
+  #def test_screen_detection_response(self):
+    #response = self.app.post('/screenshot_detection', data={'screenshot': self.base64_str, 'username': 'kingston'}, content_type='multipart/form-data')
 
-    result = "Response Data from screenshot detection:" + str(len(response.get_json())) + "\n\tResponse time: " + str(self.start - time())
-    self.result.append(result)
-    self.assertEqual(response.status_code, 200)
-    self.assertEqual(response.content_type, 'application/json')
-"""
+    #result = "Response Data from screenshot detection:" + str(len(response.get_json())) + "\n\tResponse time: " + str(self.start - time())
+    #self.result.append(result)
+    #self.assertEqual(response.status_code, 200)
+    #self.assertEqual(response.content_type, 'application/json')
 
   def test_yoloviolence_detection_response(self):
     response = self.app.post('/yoloviolencedetection', data={'screenshot': self.base64_str, 'username': 'kingston'}, content_type='multipart/form-data')
@@ -58,7 +56,7 @@ class FlaskAppTests(unittest.TestCase):
 
   def show_results(self):
     for res in self.result:
-      print(res)
+       print(res)
 
 if __name__ == '__main__':
   unittest.main()
