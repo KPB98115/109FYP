@@ -105,4 +105,4 @@ def get_coordinates(base64_str, user_level = 0):
         return result_json
     except Exception as error:
         print("Failed extract coordinates:" + str(error))
-        return []    
+        return "[]"    
