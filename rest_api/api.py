@@ -2,10 +2,10 @@ from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import face_detect
 import object_detect
+import yoloviolencedetection
 from PIL import Image
 import numpy as np
 import cv2
-import Yoloviolencedetection
 
 app = Flask(__name__)
 CORS(app)
@@ -79,17 +79,19 @@ def realtime_authentication():
   except Exception as error:
     print(str(error))
 
-@app.route('/screenshot_detection', methods=['POST'])
+@app.route('/yoloviolencedetection', methods=['POST'])
 def yoloviolence_detection():
-  #userID = request.form['user']
-  screenshot_in_base64: str = request.form['screenshot']
-  screen_width: int = int(request.form['screen_width'])
-  screen_height: int = int(request.form['screen_height'])
-  result = Yoloviolencedetection.get_coordinates(screenshot_in_base64, screen_width, screen_height, user_level=0)
-  #result = object_detect.get_coordinates(screenshot_in_base64, user_level=0)
-  print(result)
-  return jsonify(result)
-
+  try:
+    #userID = request.form['user']
+    screenshot_in_base64 : str = request.form['screenshot']
+    result = yoloviolencedetection.get_coordinates(screenshot_in_base64, user_level=0)
+    #result = object_detect.get_coordinates(screenshot_in_base64, user_level=0)
+    print(result)
+    return jsonify({'result': result})
+  except Exception as error:
+      print("Error in yoloviolence_detection:", str(error))
+      return jsonify({'error': str(error)}), 500
+    
 #Run the script with $flask run -h 172.31.114.168
 if __name__ == '__main__':
     app.run(debug=True)
