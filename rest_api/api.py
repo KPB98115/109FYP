@@ -1,14 +1,17 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, send_file
 from flask_cors import CORS
 import face_detect
 import object_detect
-import yoloviolencedetection
 from PIL import Image
 import numpy as np
 import cv2
+from violencedetection_video import create_mosaicvideo
+import os
 
 app = Flask(__name__)
 CORS(app)
+UPLOAD_FOLDER = 'uploads'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 @app.route('/', methods=['GET'])
 def welcome():
@@ -79,18 +82,25 @@ def realtime_authentication():
   except Exception as error:
     print(str(error))
 
-@app.route('/yoloviolencedetection', methods=['POST'])
-def yoloviolence_detection():
-  try:
-    #userID = request.form['user']
-    screenshot_in_base64 : str = request.form['screenshot']
-    result = yoloviolencedetection.get_coordinates(screenshot_in_base64, user_level=0)
-    #result = object_detect.get_coordinates(screenshot_in_base64, user_level=0)
-    print(result)
-    return jsonify({'result': result})
-  except Exception as error:
-      print("Error in yoloviolence_detection:", str(error))
-      return jsonify({'error': str(error)}), 500
+@app.route('/create_mosaic', methods=['POST'])
+def create_mosaic():
+    try:
+        # 獲取使用者權限等級
+        user_permission = request.form['user_permission']
+        # 獲取上傳的影片檔案
+        uploaded_file = request.files['video_file']
+        # 檢查檔案是否為空
+        if uploaded_file.filename == '':
+            return jsonify({'error': 'No file selected.'}), 400
+        # 保存上傳的影片檔案
+        video_path = os.path.join(app.config['UPLOAD_FOLDER'], uploaded_file.filename)
+        uploaded_file.save(video_path)
+        # 調用 create_mosaicvideo 函數來處理影片
+        output_video_path = create_mosaicvideo(user_permission, video_path)
+        # 返回處理後的影片
+        return send_file(output_video_path, as_attachment=True)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
     
 #Run the script with $flask run -h 172.31.114.168
 if __name__ == '__main__':
