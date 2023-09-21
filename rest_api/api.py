@@ -1,11 +1,10 @@
 from flask import Flask, request, jsonify, render_template, send_file
 from flask_cors import CORS
 import face_detect
-import object_detect
+import violencedetection_video
 from PIL import Image
 import numpy as np
 import cv2
-from violencedetection_video import create_mosaicvideo
 import os
 
 app = Flask(__name__)
