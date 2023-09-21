@@ -96,8 +96,10 @@ def create_mosaic():
         uploaded_file.save(video_path)
         # 調用 create_mosaicvideo 函數來處理影片
         output_video_path = create_mosaicvideo(user_permission, video_path)
-        # 返回處理後的影片
-        return send_file(output_video_path, as_attachment=True)
+        # 構造下載的文件名
+        download_name = os.path.splitext(uploaded_file.filename)[0] + '_mosaic.mp4'
+        # 直接返回處理後的影片文件，並設定下載的文件名
+        return send_file(output_video_path, as_attachment=True, download_name=download_name)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     
