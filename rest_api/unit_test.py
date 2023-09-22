@@ -48,7 +48,7 @@ class FlaskAppTests(unittest.TestCase):
 
   def test_create_mosaic_response(self):
     with open('violencetest1.mp4', 'rb') as video_file:
-        response = self.app.post('/create_mosaic', data={'user_permission': 'admin', 'video_file': (video_file, 'tviolencetest1.mp4')}, content_type='multipart/form-data')
+        response = self.app.post('/create_mosaic', data={'user_permission': 'admin', 'video_file': (video_file, 'violencetest1.mp4')}, content_type='multipart/form-data')
     
     result = "Response Data from create mosaic:" + str(response.headers['Content-Disposition'].split('filename=')[1].strip('"')) + "\n\tResponse time: " + str(self.start - time())
     self.result.append(result)
