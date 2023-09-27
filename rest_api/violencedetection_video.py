@@ -1,5 +1,8 @@
 ##呼叫create_mosaicvideo，輸入使用者權限等級和影片，輸出暴力物件偵測完的馬賽克影片。
-#最後編輯時間:2023/09/21 22:00 Lynn
+#最後編輯時間:2023/09/21 22:00 
+#在開始執行前，請確認安裝必要套件
+#pip install ultralytics
+#pip install yolov5
 from ultralytics import YOLO
 import cv2
 import numpy as np
@@ -37,7 +40,7 @@ def put_mosaic(image, forbidden_object_coordinates):
 
 def create_mosaicvideo(user_permission, video_path):
     # 載入預訓練的 YOLOv5s 模型
-    model = YOLO('20230917.pt')#請在此更改欲使用之權重檔名稱，並確定路徑。
+    model = YOLO('20230714yolov5.pt')#請在此更改欲使用之權重檔名稱，並確定路徑。
     
     # 定義影片檔案的路徑
     source = video_path
