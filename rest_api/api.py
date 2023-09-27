@@ -102,7 +102,25 @@ def create_mosaic():
         return send_file(output_video_path, as_attachment=True, download_name=download_name)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    
+
+@app.route('/get_mosaic', methods=['GET'])
+def get_mosaic():
+    try:
+        # 獲取輸入的影片名稱
+        video_name = request.args.get('video_name')  # 使用 query 參數獲取 video_name
+        # 構造相應的 _mosaic.mp4 文件名
+        mosaic_video_name = video_name.split('.')[0] + '_mosaic.mp4'
+        # 構造 _mosaic.mp4 文件的完整路徑
+        mosaic_video_path = os.path.join(UPLOADS_FOLDER, mosaic_video_name)
+        # 檢查文件是否存在
+        if os.path.exists(mosaic_video_path):
+            # 返回 _mosaic.mp4 文件
+            return send_file(mosaic_video_path, as_attachment=True)
+        else:
+            return jsonify({'error': 'Mosaic video not found.'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 #Run the script with $flask run -h 172.31.114.168
 if __name__ == '__main__':
     app.run(debug=True)
