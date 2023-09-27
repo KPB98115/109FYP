@@ -46,23 +46,36 @@ class FlaskAppTests(unittest.TestCase):
     #self.assertEqual(response.status_code, 200)
     #self.assertEqual(response.content_type, 'application/json')
 
-  def test_create_mosaic_response(self):
+ def test_create_mosaic_response(self):
     with open('violencetest1.mp4', 'rb') as video_file:
         response = self.app.post('/create_mosaic', data={'user_permission': 'admin', 'video_file': (video_file, 'violencetest1.mp4')}, content_type='multipart/form-data')
       
-    result = "Response Data from create mosaic:" + str(response.headers['Content-Disposition'].split('filename=')[1].strip('"')) + "\n\tResponse time: " + str(self.start - time())
+    try:
+        content_disposition = response.headers['Content-Disposition']
+        filename = content_disposition.split('filename=')[1].strip('"')
+    except KeyError:
+        filename = "N/A"
+
+    result = "Response Data from create mosaic:" + filename + "\n\tResponse time: " + str(self.start - time())
     self.result.append(result)
     self.assertEqual(response.status_code, 200)
-    self.assertEqual(response.content_type, 'application/octet-stream') 
+    self.assertEqual(response.content_type, 'application/octet-stream')
 
   def test_get_mosaic_response(self):
     with open('violencetest1.mp4', 'rb') as video_file:
         response = self.app.get('/get_mosaic?video_name=violencetest1.mp4')
       
-    result = "Response Data from get mosaic:" + str(response.headers['Content-Disposition'].split('filename=')[1].strip('"')) + "\n\tResponse time: " + str(self.start - time())
+    try:
+        content_disposition = response.headers['Content-Disposition']
+        filename = content_disposition.split('filename=')[1].strip('"')
+    except KeyError:
+        filename = "N/A"
+
+    result = "Response Data from get mosaic:" + filename + "\n\tResponse time: " + str(self.start - time())
     self.result.append(result)
     self.assertEqual(response.status_code, 200)
     self.assertEqual(response.content_type, 'application/octet-stream')
+  
   
   def show_results(self):
     for res in self.result:
