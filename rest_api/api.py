@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, render_template, send_file
 from flask_cors import CORS
 import face_detect
-import violencedetection_video
+from violencedetection_video import create_mosaicvideo
 from PIL import Image
 import numpy as np
 import cv2
@@ -92,14 +92,14 @@ def create_mosaic():
         if uploaded_file.filename == '':
             return jsonify({'error': 'No file selected.'}), 400
         # 保存上傳的影片檔案
-        video_path = os.path.join(app.config['UPLOAD_FOLDER'], uploaded_file.filename)
+        video_path = os.path.join(app.config['UPLOADS_FOLDER'], uploaded_file.filename)
         uploaded_file.save(video_path)
         # 調用 create_mosaicvideo 函數來處理影片
         output_video_path = create_mosaicvideo(user_permission, video_path)
         # 構造下載的文件名
         download_name = os.path.splitext(uploaded_file.filename)[0] + '_mosaic.mp4'
         # 直接返回處理後的影片文件，並設定下載的文件名
-        return send_file(output_video_path, as_attachment=True, download_name=download_name)
+        return send_file(output_video_path, as_attachment=True, download_name=download_name, attachment_filename=download_name)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -115,7 +115,7 @@ def get_mosaic():
         # 檢查文件是否存在
         if os.path.exists(mosaic_video_path):
             # 返回 _mosaic.mp4 文件
-            return send_file(mosaic_video_path, as_attachment=True)
+            return send_file(mosaic_video_path, as_attachment=True, download_name=video_name, attachment_filename=video_name)
         else:
             return jsonify({'error': 'Mosaic video not found.'}), 404
     except Exception as e:
