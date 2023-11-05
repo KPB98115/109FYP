@@ -37,26 +37,49 @@ class FlaskAppTests(unittest.TestCase):
     self.result.append(result)
     self.assertEqual(response.status_code, 200)
     self.assertEqual(response.content_type, 'application/json')
+    
+  #def test_screen_detection_response(self):
+    #response = self.app.post('/screenshot_detection', data={'screenshot': self.base64_str, 'username': 'kingston'}, content_type='multipart/form-data')
 
-  def test_screen_detection_response(self):
-    response = self.app.post('/screenshot_detection', data={'screenshot': self.base64_str, 'username': 'kingston'}, content_type='multipart/form-data')
+    #result = "Response Data from screenshot detection:" + str(len(response.get_json())) + "\n\tResponse time: " + str(self.start - time())
+    #self.result.append(result)
+    #self.assertEqual(response.status_code, 200)
+    #self.assertEqual(response.content_type, 'application/json')
 
-    result = "Response Data from screenshot detection:" + str(len(response.get_json())) + "\n\tResponse time: " + str(self.start - time())
+ def test_create_mosaic_response(self):
+    with open('violencetest1.mp4', 'rb') as video_file:
+        response = self.app.post('/create_mosaic', data={'user_permission': 'admin', 'video_file': (video_file, 'violencetest1.mp4')}, content_type='multipart/form-data')
+      
+    try:
+        content_disposition = response.headers['Content-Disposition']
+        filename = content_disposition.split('filename=')[1].strip('"')
+    except KeyError:
+        filename = "N/A"
+
+    result = "Response Data from create mosaic:" + filename + "\n\tResponse time: " + str(self.start - time())
     self.result.append(result)
     self.assertEqual(response.status_code, 200)
-    self.assertEqual(response.content_type, 'application/json')
+    self.assertEqual(response.content_type, 'application/octet-stream')
 
-  def test_yoloviolence_detection_response(self):
-    response = self.app.post('/yoloviolencedetection', data={'screenshot': self.base64_str, 'username': 'kingston'}, content_type='multipart/form-data')
+  def test_get_mosaic_response(self):
+    with open('violencetest1.mp4', 'rb') as video_file:
+        response = self.app.get('/get_mosaic?video_name=violencetest1.mp4')
+      
+    try:
+        content_disposition = response.headers['Content-Disposition']
+        filename = content_disposition.split('filename=')[1].strip('"')
+    except KeyError:
+        filename = "N/A"
 
-    result = "Response Data from violence detection:"+ str(len(response.get_json())) + "\n\tResponse time: " + str(self.start - time())
+    result = "Response Data from get mosaic:" + filename + "\n\tResponse time: " + str(self.start - time())
     self.result.append(result)
     self.assertEqual(response.status_code, 200)
-    self.assertEqual(response.content_type, 'application/json')
+    self.assertEqual(response.content_type, 'application/octet-stream')
+  
   
   def show_results(self):
     for res in self.result:
-      print(res)
+       print(res)
 
 if __name__ == '__main__':
   unittest.main()

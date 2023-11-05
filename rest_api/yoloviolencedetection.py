@@ -6,6 +6,7 @@
 ##使用"自定義的權重檔"，對"圖片"進行預測，可輸出暴力物件座標。
 import io
 import os
+import json
 from ultralytics import YOLO
 from PIL import Image, ImageDraw
 import base64
@@ -98,8 +99,11 @@ def get_coordinates(base64_str, user_level = 0):
                 forbidden_object_coordinates.append(coordinates_in_original) # TODO: add coordinate dict
         # 調用存取控制方法
         forbidden_object_indices = filter_forbidden_objects(user_level, forbidden_object_coordinates)
+        # 將結果轉換為JSON格式的字串
+        result_json = json.dumps(forbidden_object_indices)
         os.remove('screenshot.png')
-        return forbidden_object_indices
+        #return forbidden_object_indices
+        return result_json
     except Exception as error:
         print("Failed extract coordinates:" + str(error))
-        return []    
+        return "[]"    
