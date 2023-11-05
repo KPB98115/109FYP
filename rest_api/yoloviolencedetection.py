@@ -1,9 +1,9 @@
-#最後編輯時間為:2023/09/13 16:00 By Lynn
-#使用"自定義的權重檔"，對"圖片"進行預測，可輸出暴力物件座標，也可以將暴力物件馬賽克圖片輸出。
+##使用"自定義的權重檔"，對"圖片"進行預測，可輸出暴力物件座標，也可以將暴力物件馬賽克圖片輸出。
 #使用前請確認有適當安裝以下兩個套件
 #pip install ultralytics
 #pip install yolov5
 ##使用"自定義的權重檔"，對"圖片"進行預測，可輸出暴力物件座標。
+
 import io
 import os
 import json
@@ -31,20 +31,17 @@ def save_base64_string_as_image(base64_string):
         file.write(image_data)
     return "screenshot.jpg"
 
+import json
+import os
+from ultralytics import YOLO
+from PIL import Image, ImageDraw
+
 # 控制使用者是否能存取暴力物件
 def filter_forbidden_objects(user_level, object_list):
     if user_level == 0:
         return object_list
     else:
         return []
-        
-# 將座標清單整理為整數，並作為返回值
-def get_forbidden_object_coordinates(indices):
-    coordinates_list = []
-    for coordinates in indices:
-        x_min, y_min, x_max, y_max = coordinates.values()
-        coordinates_list.append({'xmin': int(x_min), 'ymin': int(y_min), 'xmax': int(x_max), 'ymax': int(y_max)})
-    return coordinates_list
 
 # Default user level is 0
 def get_coordinates(base64_str, user_level = 0):
@@ -106,4 +103,4 @@ def get_coordinates(base64_str, user_level = 0):
         return result_json
     except Exception as error:
         print("Failed extract coordinates:" + str(error))
-        return "[]"    
+        return "[]"
