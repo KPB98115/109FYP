@@ -1,15 +1,18 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, send_file
 from flask_cors import CORS
 import face_detect
-import object_detect
-import yoloviolencedetection
+from violencedetection_video import create_mosaicvideo
 from PIL import Image
 import numpy as np
 import cv2
-import concurrent.futures
+import Yoloviolencedetection
+import os
+import base64
+from video_detection import create_mosaicvideo
 
 app = Flask(__name__)
 CORS(app)
+dir_name = os.path.dirname(__file__)
 
 @app.route('/', methods=['GET'])
 def welcome():
@@ -69,10 +72,8 @@ def realtime_authentication():
     return {'auth': False, 'status': 'formData not found'}
 
   try:
-    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-      future = executor.submit(face_detect.realtime_detection, userID, formData)
     # Perform facial recognition and return the result as a boolean value
-    result = future.result()
+    result = face_detect.realtime_detection(userID, formData)
     print(type(result))
     if result:
       print('Status: Access granted')
@@ -82,15 +83,54 @@ def realtime_authentication():
   except Exception as error:
     print(str(error))
 
-@app.route('/screenshot_detection', methods=['POST'])
-def screenshot_detection():
-  #userID = request.form['user']
-  screenshot_in_base64 = request.form['screenshot']
-  with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-    future = executor.submit(object_detect.get_coordinates, screenshot_in_base64, user_level = 0)
-  result = future.result()
-  print(result)
-  return jsonify(result)
+@app.route('/video_pixelation', methods=['POST'])
+def video_pixelation():
+  try:
+    # 獲取使用者權限等級
+    user_permission = request.form['permission']
+    # 獲取上傳的影片檔案
+    uploaded_file = request.files.get('file')
+    # 檢查檔案是否為空
+  except:
+    return jsonify({'error': 'No file founded.'}), 400
+  try:
+    # 保存上傳的影片檔案
+    video_path = os.path.join(dir_name, uploaded_file.filename)
+    uploaded_file.save(video_path)
+    # 調用 create_mosaicvideo 函數來處理影片
+    create_mosaicvideo(user_permission, video_path)
+    return None
+  except Exception as e:
+    return jsonify({'error': str(e)}), 500
+  
+@app.route('/get_previewImage', methods=['GET'])
+def get_previewImage():
+  try:
+    images_response = {}
+    for filename in os.listdir(f'{dir_name}/image/previews'):
+      with open(os.path.join(f'{dir_name}/image/previews', filename), 'rb') as file:
+        images_response[os.path.basename(file.name)] = base64.b64encode(file.read()).decode('utf-8')
+        # Output: {'filename': base64_string, ...}
+    return jsonify(images_response)
+  except Exception as e:
+    return jsonify({'error': str(e)}), 500
+
+@app.route('/get_media', methods=['GET'])
+def get_media():
+  try:
+    # 獲取輸入的影片名稱
+    #video_name = request.form('video_name')
+    video_name = request.args['title']
+    # 構造 _mosaic.mp4 文件的完整路徑
+    pixelate_video_path = os.path.join(f'{dir_name}/static', video_name)
+    # 檢查文件是否存在
+    if os.path.exists(pixelate_video_path):
+      # 返回 _mosaic.mp4 文件
+      return send_file(pixelate_video_path, as_attachment=True, download_name=video_name)
+    else:
+      return jsonify({'error': 'pixelate video not found.'}), 404
+  except Exception as e:
+    return jsonify({'error': str(e)}), 500
 
 @app.route('/yoloviolencedetection', methods=['POST'])
 def yoloviolence_detection():
@@ -106,6 +146,6 @@ def yoloviolence_detection():
         print("Error in yoloviolence_detection:", str(error))
         return jsonify({'error': str(error)}), 500
 
-#Run the script with $flask run -h 172.31.114.168
+#Run the script with $flask --app api run --host=172.31.114.168
 if __name__ == '__main__':
-    app.run(debug=True)
+  app.run(debug=True)

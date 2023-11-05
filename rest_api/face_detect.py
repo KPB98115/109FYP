@@ -3,9 +3,10 @@ import os
 import cv2
 import numpy as np
 import util
-import base64
 import random
-#from pymongo import MongoClient
+from base64 import b64decode
+from PIL import Image
+from io import BytesIO
 
 valid_images = []
 valid_image_encodings = []
@@ -18,55 +19,44 @@ valid_faces_names = [
   "Hebby"
 ]
 
-def realtime_detection(userID, base64_str):
+def realtime_detection(userID, base64_image):
   try:
-    # Remove the data attribute from the string
-    index = base64_str.find(',') + 1
-    base64_str = base64_str[index:]
-    # Convert to JPEG format
-    decoded_img = base64.b64decode(base64_str)
+    binary_image = b64decode(base64_image)
+    file_image = BytesIO(binary_image)
+    #with open(os.path.join(dirname, 'temp.jpg'), "wb") as file:
+    #  file.write(base64_image)
+    #unknown_img = faceRec.load_image_file(os.path.join(dirname, 'temp.jpg'))
+    unknown_img = faceRec.load_image_file(file_image)
+    #os.remove('temp.jpg')
   except Exception as error:
-    print("Failed to convert image.")
+    print("Failed to save image: ", error)
     return False
-  
   try:
-    with open(os.path.join(dirname, 'temp.jpg'), "wb") as file:
-      file.write(decoded_img)
-    unknown_img = faceRec.load_image_file(os.path.join(dirname, 'temp.jpg'))
-    os.remove('temp.jpg')
-    # unit test purpose
-    with open(os.path.join(dirname, f'image/test_img/male_{random.randint(100, 999)}.jpg'), "wb") as file:
-      file.write(decoded_img)
-
-    is_authorized = compare_faces(unknown_img, userID)
+    is_authorized = realtime_compare_faces(unknown_img, userID)
     return is_authorized
   except Exception as error:
-    print("Failed to compare with users: ")
+    print("Failed to compare with users: ", userID)
     return False
     
 
-def detection(base64_str, original_image_exposure_time=0.0303):
+def detection(base64_image):
   try:
-    # Remove the data attribute from the string
-    index = base64_str.find(',') + 1
-    base64_str = base64_str[index:]
-    # Convert the WebP file to a JPEG format
-    decoded_img = base64.b64decode(base64_str)
     # Save the screenshot to dictionary
-    with open(os.path.join(dirname, "image/unknown_profile_pic/unknown_user.jpg"), "wb") as file:
-      file.write(decoded_img)
-
+    #with open(os.path.join(dirname, "image/unknown_profile_pic/unknown_user.jpg"), "wb") as file:
+    #  file.write(base64_image)
     #cv2.imwrite("unknown_user.jpeg", jpeg_bytes, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
+    binary_data = b64decode(base64_image)
+    file_image = BytesIO(binary_data)
   except Exception as error:
-    print("Failed to convert image.")
+    print("Failed to save image: ", error)
     return ["unknown", False, str(error)]
 
   # Load the valid image.
   try:
-    if "unknown_user.jpg" in os.listdir(os.path.join(dirname, "image/unknown_profile_pic")):
-      # Load the unknown image for face recognition testing.
-      print("Status: Loading unknown image")
-      unknown_image = faceRec.load_image_file(os.path.join(dirname, "image/unknown_profile_pic/unknown_user.jpg"))
+    # Load the unknown image for face recognition testing.
+    print("Status: Loading unknown image")
+    #unknown_image = faceRec.load_image_file(os.path.join(dirname, "image/unknown_profile_pic/unknown_user.jpg"))
+    unknown_image = faceRec.load_image_file(file_image)
   except Exception as error:
     print("Error: Failed to load unknown image")
     return ["unknown", False, str(error)]
@@ -74,43 +64,43 @@ def detection(base64_str, original_image_exposure_time=0.0303):
   # Using the original image to compare
   print('Status: Comparing with original image...')
   # This result should be a List object
-  result = compare_faces(unknown_image)
-  if type(result) is bool and result is False:
-    return result # return Boolean objet
-  if type(result) is list and result[1] is True:
-    return result # return List object
+  result = login_compare_faces(unknown_image)
+  print(result)
+  if result[1] is False:
+    increase_brightness_image = increase_brightness(unknown_image)
+    second_result = login_compare_faces(increase_brightness_image)
+    if second_result[1] is False:
+      return login_compare_faces(merge_to_HDR(increase_brightness_image, unknown_image))
+  else:
+    return result
 
+# The parameters must be numpy array
+def increase_brightness(unknown_image):
   # Increase the brightness of the image
   print('Status: Comparing with brightness increased image...')
-  img_list = [unknown_image]
   for num in range(1, 4, 2):
     brightness = num/10
     brightness_increased_image = cv2.addWeighted(unknown_image, brightness, unknown_image, brightness, 0.0)
-    result = compare_faces(brightness_increased_image)
-    if type(result) is bool and result is False:
-      return result # return Boolean objet
-    if type(result) is list and result[1] is True:
-      return result # return List object
-    img_list.append(brightness_increased_image)
-    cv2.imwrite(f'image/unknown_profile_pic/brightness{brightness}.jpg', brightness_increased_image)
+    return brightness_increased_image
 
+def merge_to_HDR(brightness_increased_image, unknown_image, original_image_exposure_time=0.0303):
   # Use Merge exposures into HDR image
   print('Status: Comparing with HDR image...')
+  img_list = [brightness_increased_image, unknown_image]
   merge_debevec = cv2.createMergeDebevec()
   exposure_times = np.array([original_image_exposure_time, 0.25, 0.5], dtype=np.float32).copy()
   hdr_debevec = merge_debevec.process(img_list, times=exposure_times)
-  unknown_image = np.clip(hdr_debevec*255, 0, 255).astype('uint8')
-  result = compare_faces(unknown_image)
-  return ["", result, "No faces were found"]
+  HDR_image = np.clip(hdr_debevec*255, 0, 255).astype('uint8')
+  return HDR_image
 
-def compare_faces(unknown_image):
+
+def login_compare_faces(unknown_image):
   try:
-    # Encoding the unknown image
     unknown_face_encoding = faceRec.face_encodings(unknown_image)[0]
   except IndexError:
     print("I wasn't able to locate any faces in at least one of the images. Check the image files. Aborting...")
-    return False
-  print("Status: Comparing...")
+
+  print("Status: Processing static recognition...")
   # Results is an array of True/False telling if the unknown face matched anyone in the known_faces array
   # Tolerance = 0.37 seems to be proper value to recognize male and female faces.
   matches = faceRec.compare_faces(util.valid_face_encodings, unknown_face_encoding, tolerance=0.37)
@@ -119,11 +109,11 @@ def compare_faces(unknown_image):
   if matches[best_match_index]:
     name = valid_faces_names[best_match_index]
     return [name, True, ""]
-  else:
-    print("No matching user found.")
-    return ["", False, "No valid user found"]
 
-def compare_faces(unknown_image, valid_user=None):
+  print("No matching user found.")
+  return ["", False, "No valid user found"]
+
+def realtime_compare_faces(unknown_image, valid_user=None):
   # Get the face encodings for each face in each image file
   # Since there could be more than one face in each image, it returns a list of encodings.
   # But since I know each image only has one face, I only care about the first encoding in each image, so I grab index 0.
@@ -141,24 +131,23 @@ def compare_faces(unknown_image, valid_user=None):
   print(f'valid user parameter is:{valid_user}')
   # If the valid_face parameter is not given, use the valid face encoding from util dir.
   # Otherwise use the given valid face image url.
-  if valid_user is not None:
-    print("Status: Processing real time recognition...")
-    if valid_user == 'Kingston':
-      result = faceRec.compare_faces([util.kingston_face_encodings], unknown_face_encoding, tolerance=0.37)[0]
-    elif valid_user == 'Eva':
-      result = faceRec.compare_faces([util.eva_face_encodings], unknown_face_encoding, tolerance=0.37)[0]
-    elif valid_user == 'Ling':
-      result = faceRec.compare_faces([util.ling_face_encodings], unknown_face_encoding, tolerance=0.37)[0]
-    elif valid_user == 'Lynn':
-      result = faceRec.compare_faces([util.lynn_face_encodings], unknown_face_encoding, tolerance=0.37)[0]
-    elif valid_user == 'Hebby':
-      result = faceRec.compare_faces([util.hebby_face_encodings], unknown_face_encoding, tolerance=0.37)[0]
-    else:
-      print("No valid user detected")
-      return False
-    # To convert numpy.bool_ to boolean
-    print("Detected valid user")
-    return bool(result)
+  print("Status: Processing real time recognition...")
+  if valid_user == 'Kingston':
+    result = faceRec.compare_faces([util.kingston_face_encodings], unknown_face_encoding, tolerance=0.37)[0]
+  elif valid_user == 'Eva':
+    result = faceRec.compare_faces([util.eva_face_encodings], unknown_face_encoding, tolerance=0.37)[0]
+  elif valid_user == 'Ling':
+    result = faceRec.compare_faces([util.ling_face_encodings], unknown_face_encoding, tolerance=0.37)[0]
+  elif valid_user == 'Lynn':
+    result = faceRec.compare_faces([util.lynn_face_encodings], unknown_face_encoding, tolerance=0.37)[0]
+  elif valid_user == 'Hebby':
+    result = faceRec.compare_faces([util.hebby_face_encodings], unknown_face_encoding, tolerance=0.37)[0]
+  else:
+    print("No valid user detected")
+    return False
+  # To convert numpy.bool_ to boolean
+  print("Detected valid user")
+  return bool(result)
 
   # This a copy from original
 
@@ -192,3 +181,7 @@ def compare_faces(unknown_image, valid_user=None):
   # Remark(2023/08/01): Added batch_face_locations() function to acclerate the face landmark locate process by access to the GPU.
   # However the Nvidia Container Toolkit not ready yet.
   # (Update 2023/08/04) The WSL environment is all set, however still not able to access to the GPU.
+
+  # Remark(2023/08/08): The module can now receive binary as parameter, no further more to decode base64 string to image.
+  # Remaek(2023/08/14): Although the module can receive binary data, there still have issues in client side.
+  # Change back to receiving base64 string as parameter.
