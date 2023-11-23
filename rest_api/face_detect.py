@@ -3,9 +3,7 @@ import os
 import cv2
 import numpy as np
 import util
-import random
 from base64 import b64decode
-from PIL import Image
 from io import BytesIO
 
 valid_images = []
@@ -19,14 +17,18 @@ valid_faces_names = [
   "Hebby"
 ]
 
-def realtime_detection(userID, base64_image):
+def realtime_detection(userID, image: str | bytes):
   try:
-    binary_image = b64decode(base64_image)
-    file_image = BytesIO(binary_image)
-    #with open(os.path.join(dirname, 'temp.jpg'), "wb") as file:
-    #  file.write(base64_image)
-    #unknown_img = faceRec.load_image_file(os.path.join(dirname, 'temp.jpg'))
-    unknown_img = faceRec.load_image_file(file_image)
+    if type(image) is str:
+      print('image is str')
+      binary_image = b64decode(image)
+      with open(os.path.join(f'{dirname}/image/cache', f'{userID}.jpg'), "wb") as file:
+        file.write(binary_image)
+      file_image = BytesIO(binary_image)
+      unknown_img = faceRec.load_image_file(file_image)
+    else:
+      print('image is bytes')
+      unknown_img = faceRec.load_image_file(BytesIO(image))
     #os.remove('temp.jpg')
   except Exception as error:
     print("Failed to save image: ", error)
