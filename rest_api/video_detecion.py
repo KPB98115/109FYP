@@ -12,21 +12,6 @@ import os
 
 dir_name = os.path.dirname(__file__)
 
-def capture_preview(video_path: str, filename: str):
-  capture = cv2.VideoCapture(video_path)
-  
-  if capture.isOpen():
-    ret, frame = capture.read()
-    if not ret:
-      print("Error: Failed to read frame from video")
-      return
-    
-    previewImage_path = os.path.join(f'{dir_name}/static/previews', f'{filename}.jpg')
-    cv2.imwrite(previewImage_path, frame)
-    print(f"Preview image saved as {filename}.jpg")
-
-  capture.release()
-
 def put_mosaic(image, forbidden_object_coordinates):
   # 複製原始圖像
   image_copy = image.copy()
