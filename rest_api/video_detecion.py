@@ -41,7 +41,7 @@ def put_mosaic(image, forbidden_object_coordinates):
 
   return image_copy
 
-def create_mosaicvideo(user_permission, video_path):
+def create_mosaicvideo(video_path: str, filename: str):
   # 載入預訓練的 YOLOv5s 模型
   model = YOLO('20230714yolov5.pt')#請在此更改欲使用之權重檔名稱，並確定路徑。
   
@@ -50,6 +50,17 @@ def create_mosaicvideo(user_permission, video_path):
   
   # 打開影片文件
   cap = cv2.VideoCapture(source)
+
+  # Create preview image of video
+  if cap.isOpen():
+    ret, frame = cap.read()
+    if not ret:
+      print("Error: Failed to read frame from video")
+      return
+    
+    previewImage_path = os.path.join(f'{dir_name}/static/previews', f'{filename}.jpg')
+    cv2.imwrite(previewImage_path, frame)
+    print(f"Preview image saved as {filename}.jpg")
   
   # 獲取輸入影片的寬度和高度
   input_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -65,7 +76,7 @@ def create_mosaicvideo(user_permission, video_path):
   output = BytesIO()
   fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # 定義編碼方式
   #out = cv2.VideoWriter(output, fourcc, fps, (input_width, input_height))
-  out = cv2.VideoWriter(os.path.join(dir_name, "static/pixelate_videos/output_mosaic.mp4"), fourcc, fps, (input_width, input_height), isColor=True)
+  out = cv2.VideoWriter(os.path.join(dir_name, f'static/pixelate_videos/{filename}'), fourcc, fps, (input_width, input_height), isColor=True)
   
   # 設定馬賽克停留的幀數
   mosaic_duration_frames = int(fps * 10)  # 停留 2 秒（若 fps = 30，則為 60 幀）
@@ -111,8 +122,9 @@ def create_mosaicvideo(user_permission, video_path):
     frame_count += 1
   
   # 關閉 VideoWriter 物件
-  print('flag')
+  capture_preview(video_path, filename)
   out.release()
+  cap.release()
   
   # 回傳記憶體中的影片資料
   #output.seek(0)
