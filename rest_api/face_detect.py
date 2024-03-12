@@ -9,13 +9,7 @@ from io import BytesIO
 valid_images = []
 valid_image_encodings = []
 dirname = os.path.dirname(__file__)
-valid_faces_names = [
-  "Kingston",
-  "Eva",
-  "Ling",
-  "Lynn",
-  "Hebby"
-]
+valid_faces_names = list(util.valid_users_info.keys())
 
 def realtime_detection(userID, image: str | bytes):
   try:
@@ -110,7 +104,9 @@ def login_compare_faces(unknown_image):
   best_match_index = np.argmin(face_distances)
   if matches[best_match_index]:
     name = valid_faces_names[best_match_index]
-    return [name, True, ""]
+    if name == "Ling":
+      return [name, True, "", True]
+    return [name, True, "", False]
 
   print("No matching user found.")
   return ["", False, "No valid user found"]
@@ -134,6 +130,8 @@ def realtime_compare_faces(unknown_image, valid_user=None):
   # If the valid_face parameter is not given, use the valid face encoding from util dir.
   # Otherwise use the given valid face image url.
   print("Status: Processing real time recognition...")
+
+  """
   if valid_user == 'Kingston':
     result = faceRec.compare_faces([util.kingston_face_encodings], unknown_face_encoding, tolerance=0.37)[0]
   elif valid_user == 'Eva':
@@ -144,6 +142,9 @@ def realtime_compare_faces(unknown_image, valid_user=None):
     result = faceRec.compare_faces([util.lynn_face_encodings], unknown_face_encoding, tolerance=0.37)[0]
   elif valid_user == 'Hebby':
     result = faceRec.compare_faces([util.hebby_face_encodings], unknown_face_encoding, tolerance=0.37)[0]
+  """
+  if valid_user in util.valid_usernames:
+    result = faceRec.compare_faces([util.valid_users_info[valid_user]], unknown_face_encoding, tolerance=0.37)[0]
   else:
     print("No valid user detected")
     return False

@@ -1,12 +1,24 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useContext, useEffect } from 'react';
 import { View, Button, StyleSheet, TextInput, TouchableOpacity, Text } from 'react-native';
-import { WebView, WebViewNavigation } from 'react-native-webview';
 import ScreenCaptureService from './ScreenCaptureService';
 import { NativeModules } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import AuthContext from '../data/Context';
 
 interface MainPageProps {
   navigation: any;
+}
+
+interface PixelatedProps {
+  topLeft: any[];
+  bottomRight: any[];
+}
+
+interface ForbiddenCoordinates {
+  name: string;
+  xmin: number;
+  ymin: number;
+  xmax: number;
+  ymax: number;
 }
 
 const { NativeScreenshotModule } = NativeModules;
@@ -19,19 +31,29 @@ const MainPage: React.FC<MainPageProps> = ({ navigation }) => {
   const [input, setInput] = useState(url);
   const [previousNavigatedUrl, setPreviousNavigatedUrl] = useState(url);
   const [isWebViewLoaded, setIsWebViewLoaded] = useState(false);
+  const authContext = useContext(AuthContext);
+  const [pixelateArea, setPixelateArea] = useState<PixelatedProps>({topLeft: [], bottomRight: []});
+  const [detectedItems, setDetectedItems] = useState<String[]>([]);
 
   const startCapture = () => {
-    console.error('Start capturing');
+    console.log('startCapturing');
     setIsCapturing(true);
+    //setIsMenuShow(!isMenuShow);
   };
 
   const stopCapture = () => {
-    console.error('Stop capturing');
+    console.log('Stop capturing');
     setIsCapturing(false);
   };
 
   const handleMenuShow = () => {
     setIsMenuShow(!isMenuShow);
+  };
+
+  const handleLoginOut = () => {
+    setIsCapturing(false);
+    authContext.currentUser = '';
+    navigation.navigate('Login');
   };
 
   const showCollapseIcon = (): string => {
@@ -46,13 +68,7 @@ const MainPage: React.FC<MainPageProps> = ({ navigation }) => {
   };
 
   const handleRedirect = () => {
-    const removeAllPixelate = `
-    var pixelateBox = document.getElementByClassName('pixelateBox');
-      if (pixelateBox) {
-        pixelateBox.remove();
-      }
-    `;
-    webViewRef.current?.injectJavaScript(removeAllPixelate);
+    removeAllPixelateArea();
     setUrl(input);
   };
 
@@ -65,34 +81,50 @@ const MainPage: React.FC<MainPageProps> = ({ navigation }) => {
     setInput('');
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      // Do something when the screen is focused
-      console.log('MainPage component is focused');
-      //setIsWebViewLoaded(true);
+  /**
+   * Called when the repsonse is received from the ScreenCaptureService.tsx component.
+   * @param coordinates should be a list of objects containing forbidden objects or areas.
+  */
+  const handleScreenCaptureResponse = (coordinates: any) => {
+    let itemsName: String[] = [];
+    coordinates.map((coor: ForbiddenCoordinates) => {
+      itemsName.push(coor.name);
+      const topLeft: number[] = [coor.xmin, coor.ymin];
+      const bottomRight: number[] = [coor.xmax, coor.ymax];
+      setPixelateArea({topLeft: topLeft, bottomRight: bottomRight});
+    });
+    setDetectedItems(itemsName);
+  };
 
-      return () => {
-        // Do something when the screen is unfocused
-        console.log('MainPage component is blurred');
-        //setIsWebViewLoaded(false);
-        // Useful for cleanup functions
-      };
-    }, [])
-  );
+  useEffect(() => {
+    if (isCapturing) {
+      // The re-render may not be triggered if the value remains the same
+      console.log('Append the pixelate div on: ', pixelateArea);
+      appendPixelatedDiv(pixelateArea.topLeft, pixelateArea.bottomRight);
+    }
+  },[pixelateArea]);
 
-  const appendPixelatedDiv = (pA: number[], pC: number[]) => {
+  /**
+   * To append custom div into WebView DOM.
+   * @param topLeft should be a list of numbers that represent coordinates
+   * @param bottomRight should be a list of numbers that represent coordinates
+   */
+  const appendPixelatedDiv = (topLeft:number[], bottomRight:number[]) => {
     // The parameters is the top left and bottom right coordinate of the pixelated content
-    const width = Math.abs(pA[0] - pC[0]) + 'px';
-    const height = Math.abs(pA[1] - pC[1]) + 'px';
-    const top = Math.min(pA[1], pC[1]) + 'px';
-    const left = Math.min(pA[0], pC[0]) + 'px';
-    const divID = pA[0] * pA[1] * pC[0] * pC[1];
-
-    console.log(pA, pC);
-
+    const width = Math.abs(topLeft[0] - bottomRight[0]) + 'px';
+    const height = Math.abs(topLeft[1] - bottomRight[1]) + 'px';
+    const top = Math.min(topLeft[1], bottomRight[1]) + 'px';
+    const left = Math.min(topLeft[0], bottomRight[0]) + 'px';
+    const divID = topLeft[0] * topLeft[1] * bottomRight[0] * bottomRight[1];
     const script = `
+      try {
+        pixelDiv.remove();
+      } catch {
+        console.log('pixelDiv does not exist.');
+      }
       var pixelDiv = document.createElement('div');
       pixelDiv.id = ${divID}
+      pixelDiv.className = 'pixelateBox';
       pixelDiv.innerHTML = 'Pixelated Div';
       pixelDiv.style.position = 'absolute';
       pixelDiv.style.width = '${width}';
@@ -109,6 +141,21 @@ const MainPage: React.FC<MainPageProps> = ({ navigation }) => {
     }
   };
 
+  const removeAllPixelateBox = () => {
+    const removeAllPixelate = `
+      pixelDiv.remove();
+    `;
+    webViewRef.current?.injectJavaScript(removeAllPixelate);
+  };
+
+  useEffect(() => {
+    if (authContext.currentUser === '') {
+      stopCapture();
+      navigation.navigate('Login');
+    }
+  },[authContext.currentUser]);
+
+  /**
   const handleNativeCapture = async () => {
     const base64_screenshot = await NativeScreenshotModule.captureScreenshot();
     const formData = new FormData();
@@ -124,25 +171,18 @@ const MainPage: React.FC<MainPageProps> = ({ navigation }) => {
         console.error('Error uploading screenshot:', error);
       });
   };
-
-  const randomNum = (): number => {
-    return Math.floor(Math.random() * 500);
-  };
+  */
 
   return (
     <>
       {isCapturing && (
-        <ScreenCaptureService />
+        <ScreenCaptureService passResponseToMain={handleScreenCaptureResponse} />
       )}
       <Button title={showCollapseIcon()} onPress={handleMenuShow} />
       {isMenuShow && (<View>
-        <Button title='Native Screenshot' onPress={handleNativeCapture} />
         <Button title="Start Capture" onPress={startCapture} />
         <Button title="Stop Capture" onPress={stopCapture} />
-        <Button title="Logout" onPress={() => {
-          stopCapture();
-          navigation.navigate('Login');
-        }} />
+        <Button title="Logout" onPress={handleLoginOut} />
       </View>)}
       <View style={{flex: 1, display: isMenuShow ? 'none' : 'flex'}}>
         <View style={styles.navigationBar_container}>
@@ -165,8 +205,11 @@ const MainPage: React.FC<MainPageProps> = ({ navigation }) => {
           source={{ uri: url }}
           onNavigationStateChange={handleNavigated}
           onLoadEnd={() => setIsWebViewLoaded(true)} />
-        <Button title="pixelate" onPress={() => appendPixelatedDiv([randomNum(), randomNum()], [randomNum(), randomNum()])} />
       </View>
+      {!isMenuShow && <>
+        <Text>Items: {detectedItems}</Text>
+        <Button title="clear" onPress={ removeAllPixelateBox } />
+      </>}
     </>
   );
 };

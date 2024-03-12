@@ -3,10 +3,20 @@ from flask_cors import CORS
 import face_detect
 import os
 from video_detection import create_mosaicvideo
+from registration import regist
+from pathlib import Path
 
 app = Flask(__name__)
 CORS(app)
-dir_name = os.path.dirname(__file__)
+DIR_NAME = os.path.dirname(__file__)
+
+#Initialize valid user images
+initial_users_image = ["kingston.jpg", "eva.jpg", "ling.jpg", "hebby.jpg", "lynn.jpg"]
+dir = Path("image/valid_profile_pic")
+for file in dir.iterdir():
+  if file.is_file() and file.name not in initial_users_image:
+    file.unlink()
+print("System initialization: initialized all valid profile image")
 
 @app.route('/', methods=['GET'])
 def welcome():
@@ -32,10 +42,12 @@ def faical_authentication():
       user = result[0]
       is_authenticated = result[1]
       status = result[2]
+      is_restricted = result[3]
       return {
           "auth": is_authenticated,
           "user": user,
-          "status": status
+          "status": status,
+          "isRestricted": is_restricted,
       }
     else:
       return {
@@ -58,7 +70,7 @@ def realtime_authentication():
     userID = request.form['username']
     if 'image' not in request.form:
       print('Using local cache to process recognition...')
-      cachedImagePath = os.path.join(f'{dir_name}/image/cache', f'{userID}.jpg')
+      cachedImagePath = os.path.join(f'{DIR_NAME}/image/cache', f'{userID}.jpg')
       with open(cachedImagePath, 'rb') as file:
         # The snapshot is bytes object
         snapshot = file.read()
@@ -92,7 +104,7 @@ def video_pixelation():
     return jsonify({'error': 'No file founded.'}), 400
   try:
     # 保存上傳的影片檔案
-    video_path = os.path.join(f'{dir_name}/static/videos', uploaded_file.filename)
+    video_path = os.path.join(f'{DIR_NAME}/static/videos', uploaded_file.filename)
     uploaded_file.save(video_path)
     # 調用 create_mosaicvideo 函數來處理影片
     create_mosaicvideo(video_path, uploaded_file.filename)
@@ -104,32 +116,37 @@ def video_pixelation():
 def get_previewImage():
   try:
     images_response = {}
-    for filename in os.listdir(f'{dir_name}/static/previews'):
-      with open(os.path.join(f'{dir_name}/static/previews', filename), 'rb') as file:
-        images_response[os.path.basename(file.name[:-4])] = f'static/previews/{filename}'
-        #images_response[os.path.basename(file.name)] = base64.b64encode(file.read()).decode('utf-8')
-        # Output: {'filename': base64_string, ...}
+    for filename in os.listdir(f'{DIR_NAME}/static/previews'):
+      if filename != '.DS_Store':
+        with open(os.path.join(f'{DIR_NAME}/static/previews', filename), 'rb') as file:
+          images_response[os.path.basename(file.name)] = f'static/previews/{filename}'
+          #images_response[os.path.basename(file.name)] = base64.b64encode(file.read()).decode('utf-8')
+          # Output: {'filename': base64_string, ...}
     return jsonify(images_response)
   except Exception as e:
     return jsonify({'error': str(e)}), 500
-
-@app.route('/get_media', methods=['GET'])
-def get_media():
+  
+@app.route('/registration', methods=['POST'])
+def registration():
   try:
-    # 獲取輸入的影片名稱
-    #video_name = request.form('video_name')
-    video_name = request.args['title']
-    # 構造 _mosaic.mp4 文件的完整路徑
-    pixelate_video_path = os.path.join(f'{dir_name}/static', video_name)
-    # 檢查文件是否存在
-    if os.path.exists(pixelate_video_path):
-      # 返回 _mosaic.mp4 文件
-      return send_file(pixelate_video_path, as_attachment=True, download_name=video_name)
-    else:
-      return jsonify({'error': 'pixelate video not found.'}), 404
+    username = request.form['username']
+    password = request.form['password']
+    image = request.form['image']
   except Exception as e:
-    return jsonify({'error': str(e)}), 500
+    print("Error: ", e)
+
+  try:
+    result = regist(username, password, image)
+    if result:
+      print("Registration successful")
+      return True
+    else:
+      print("Registration failed")
+      return False
+  except Exception as e:
+    print("Error: ", e)
+    return False
 
 #Run the script with $flask --app api run --host=172.31.114.168
 if __name__ == '__main__':
-  app.run(debug=True)
+  app.run(debug=True, host='0.0.0.0')
