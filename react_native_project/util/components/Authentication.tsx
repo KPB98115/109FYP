@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { useWindowDimensions, Button } from 'react-native';
+import { useWindowDimensions } from 'react-native';
 import { TabView, SceneMap } from 'react-native-tab-view';
 import SimpleLogin from './SimpleLogin';
 import FacialLogin from './FacialLogin';
-import Registration from './Registration';
 
 type AuthenticationProps = {
   navigation: any;

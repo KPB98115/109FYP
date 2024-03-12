@@ -10,7 +10,7 @@ from PIL import Image
 from io import BytesIO
 import os
 
-dir_name = os.path.dirname(__file__)
+DIR_NAME = os.path.dirname(__file__)
 
 def put_mosaic(image, forbidden_object_coordinates):
   # 複製原始圖像
@@ -52,13 +52,13 @@ def create_mosaicvideo(video_path: str, filename: str):
   cap = cv2.VideoCapture(source)
 
   # Create preview image of video
-  if cap.isOpen():
+  if cap.isOpened():
     ret, frame = cap.read()
     if not ret:
       print("Error: Failed to read frame from video")
       return
     
-    previewImage_path = os.path.join(f'{dir_name}/static/previews', f'{filename}.jpg')
+    previewImage_path = os.path.join(f'{DIR_NAME}/static/previews', f'{filename[:-4]}.jpg')
     cv2.imwrite(previewImage_path, frame)
     print(f"Preview image saved as {filename}.jpg")
   
@@ -76,7 +76,7 @@ def create_mosaicvideo(video_path: str, filename: str):
   output = BytesIO()
   fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # 定義編碼方式
   #out = cv2.VideoWriter(output, fourcc, fps, (input_width, input_height))
-  out = cv2.VideoWriter(os.path.join(dir_name, f'static/pixelate_videos/{filename}'), fourcc, fps, (input_width, input_height), isColor=True)
+  out = cv2.VideoWriter(os.path.join(DIR_NAME, f'static/pixelate_videos/{filename}'), fourcc, fps, (input_width, input_height), isColor=True)
   
   # 設定馬賽克停留的幀數
   mosaic_duration_frames = int(fps * 10)  # 停留 2 秒（若 fps = 30，則為 60 幀）
@@ -122,7 +122,6 @@ def create_mosaicvideo(video_path: str, filename: str):
     frame_count += 1
   
   # 關閉 VideoWriter 物件
-  capture_preview(video_path, filename)
   out.release()
   cap.release()
   
@@ -130,3 +129,6 @@ def create_mosaicvideo(video_path: str, filename: str):
   #output.seek(0)
   #return "output_mosaic.mp4"
   #return output.getvalue()
+
+#DIR_NAME = os.path.dirname(__file__)
+#create_mosaicvideo(os.path.join(DIR_NAME, 'static/videos/video1.mp4'), 'video1')

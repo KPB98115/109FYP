@@ -35,12 +35,6 @@ const SimpleLogin: React.FC<AuthenticationProps> = ({ navigation }) => {
     });
   };
 
-  const testLogin = () => {
-    authContext.isLoggedIn = true;
-    authContext.currentUser = 'Kingston';
-    navigation.navigate('MediaPage');
-  };
-
   return (
     <>
       <Button title="新用戶註冊" onPress={ () => navigation.navigate('Registration') } />
@@ -52,7 +46,7 @@ const SimpleLogin: React.FC<AuthenticationProps> = ({ navigation }) => {
         placeholder="使用者密碼"
         //value={password}
         onChangeText={setPassword} />
-      <Button title="登入" onPress={ testLogin } />
+      <Button title="登入" onPress={ handleSimpleLogin } />
     </>
   );
 };
