@@ -5,6 +5,7 @@ import os
 from video_detection import create_mosaicvideo
 from registration import regist
 from pathlib import Path
+import util
 
 app = Flask(__name__)
 CORS(app)
@@ -24,9 +25,21 @@ def welcome():
 
 @app.route('/authentication', methods=['POST'])
 def authentication():
-  return {
-    'auth': True, 'user': 'root', 'status': 'Welcome, root user'
-  }
+  username = request.form['username']
+  password = request.form['password']
+  if username != "" and password != "":
+    if username in util.valid_usernames:
+      return {
+        'auth': True, 'user': username, 'status': f'Welcome, {username}'
+      }
+    else:
+      return {
+        'auth': False, 'user': '', 'status': 'incorrect username'
+      }
+  else:
+    return {
+      'auth': False, 'user': '', 'status': 'username is empty'
+    }
 
 @app.route('/facial_authentication', methods=['POST'])
 def faical_authentication():

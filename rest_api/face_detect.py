@@ -6,8 +6,6 @@ import util
 from base64 import b64decode
 from io import BytesIO
 
-valid_images = []
-valid_image_encodings = []
 dirname = os.path.dirname(__file__)
 valid_faces_names = list(util.valid_users_info.keys())
 
@@ -45,7 +43,7 @@ def detection(base64_image):
     file_image = BytesIO(binary_data)
   except Exception as error:
     print("Failed to save image: ", error)
-    return ["unknown", False, str(error)]
+    return ["unknown", False, str(error), False]
 
   # Load the valid image.
   try:
@@ -55,7 +53,7 @@ def detection(base64_image):
     unknown_image = faceRec.load_image_file(file_image)
   except Exception as error:
     print("Error: Failed to load unknown image")
-    return ["unknown", False, str(error)]
+    return ["unknown", False, str(error), False]
   
   # Using the original image to compare
   print('Status: Comparing with original image...')
@@ -94,22 +92,25 @@ def login_compare_faces(unknown_image):
   try:
     unknown_face_encoding = faceRec.face_encodings(unknown_image)[0]
   except IndexError:
-    print("I wasn't able to locate any faces in at least one of the images. Check the image files. Aborting...")
+    return ["", False, "I wasn't able to locate any faces in at least one of the images. Check the image files. Aborting...", False]
 
   print("Status: Processing static recognition...")
   # Results is an array of True/False telling if the unknown face matched anyone in the known_faces array
   # Tolerance = 0.37 seems to be proper value to recognize male and female faces.
-  matches = faceRec.compare_faces(util.valid_face_encodings, unknown_face_encoding, tolerance=0.37)
-  face_distances = faceRec.face_distance(util.valid_face_encodings, unknown_face_encoding)
+  valid_users_encodings = []
+  for user in util.valid_users_info:
+    valid_users_encodings.append(util.valid_users_info[user]['encoding'])
+  matches = faceRec.compare_faces(valid_users_encodings, unknown_face_encoding, tolerance=0.37)
+  face_distances = faceRec.face_distance(valid_users_encodings, unknown_face_encoding)
   best_match_index = np.argmin(face_distances)
   if matches[best_match_index]:
     name = valid_faces_names[best_match_index]
-    if name == "Ling":
+    if name in util.child_users:
       return [name, True, "", True]
     return [name, True, "", False]
 
   print("No matching user found.")
-  return ["", False, "No valid user found"]
+  return ["", False, "No valid user found", False]
 
 def realtime_compare_faces(unknown_image, valid_user=None):
   # Get the face encodings for each face in each image file
